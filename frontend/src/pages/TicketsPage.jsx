@@ -7,6 +7,7 @@ function TicketsPage() {
   const [tickets, setTickets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [refreshKey, setRefreshKey] = useState(0);
 
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
@@ -14,72 +15,91 @@ function TicketsPage() {
 
   const navigate = useNavigate();
 
-  const fetchTickets = async () => {
+  useEffect(() => {
+    const controller = new AbortController();
+
+    async function fetchTickets() {
+      try {
+        const response = await fetch(`${API_URL}/api/tickets`, {
+          signal: controller.signal,
+        });
+
+        if (!response.ok) {
+          throw new Error(`Unable to load tickets (${response.status}).`);
+        }
+
+        const data = await response.json();
+
+        if (
+          !Array.isArray(data) ||
+          data.some(
+            (ticket) =>
+              ticket === null ||
+              typeof ticket !== "object" ||
+              Array.isArray(ticket),
+          )
+        ) {
+          throw new Error("The API returned an invalid ticket list.");
+        }
+
+        if (!controller.signal.aborted) {
+          setTickets(data);
+        }
+      } catch (err) {
+        if (!controller.signal.aborted) {
+          setError(err.message || "Unable to connect to the ticket API.");
+        }
+      } finally {
+        if (!controller.signal.aborted) {
+          setLoading(false);
+        }
+      }
+    }
+
+    fetchTickets();
+
+    return () => controller.abort();
+  }, [refreshKey]);
+
+  const refreshTickets = () => {
     setLoading(true);
     setError("");
-
-    try {
-      const response = await fetch(`${API_URL}/api/tickets`);
-
-      if (!response.ok) {
-        throw new Error(`Unable to load tickets (${response.status})`);
-      }
-
-      const data = await response.json();
-
-      setTickets(data);
-    } catch (err) {
-      console.error(err);
-      setError(err.message || "Unable to connect to the ticket API.");
-    } finally {
-      setLoading(false);
-    }
+    setRefreshKey((previous) => previous + 1);
   };
 
-  useEffect(() => {
-    fetchTickets();
-  }, []);
+  const categories = useMemo(
+    () =>
+      [
+        ...new Set(tickets.map((ticket) => ticket.category).filter(Boolean)),
+      ].sort(),
+    [tickets],
+  );
 
-  const categories = useMemo(() => {
-    return [
-      ...new Set(tickets.map((ticket) => ticket.category).filter(Boolean)),
-    ].sort();
-  }, [tickets]);
+  const reviewedCount = tickets.filter(
+    (ticket) =>
+      isTrue(ticket.analysis_correct) || isFalse(ticket.analysis_correct),
+  ).length;
 
-  const reviewedCount = useMemo(() => {
-    return tickets.filter(
-      (ticket) =>
-        isTrue(ticket.analysis_correct) || isFalse(ticket.analysis_correct),
-    ).length;
-  }, [tickets]);
+  const correctCount = tickets.filter((ticket) =>
+    isTrue(ticket.analysis_correct),
+  ).length;
 
-  const correctCount = useMemo(() => {
-    return tickets.filter((ticket) => isTrue(ticket.analysis_correct)).length;
-  }, [tickets]);
-
-  const pendingCount = useMemo(() => {
-    return tickets.filter((ticket) => isPendingReview(ticket.analysis_correct))
-      .length;
-  }, [tickets]);
+  const pendingCount = tickets.filter((ticket) =>
+    isPendingReview(ticket.analysis_correct),
+  ).length;
 
   const filteredTickets = useMemo(() => {
-    return tickets.filter((ticket) => {
-      const searchValue = search.trim().toLowerCase();
+    const searchValue = search.trim().toLowerCase();
 
+    return tickets.filter((ticket) => {
       const matchesSearch =
         !searchValue ||
-        String(ticket.id || "")
-          .toLowerCase()
-          .includes(searchValue) ||
-        String(ticket.subject || "")
-          .toLowerCase()
-          .includes(searchValue) ||
-        String(ticket.body || "")
-          .toLowerCase()
-          .includes(searchValue) ||
-        String(ticket.category || "")
-          .toLowerCase()
-          .includes(searchValue);
+        [ticket.id, ticket.subject, ticket.body, ticket.category].some(
+          (value) =>
+            String(value ?? "")
+              .toLowerCase()
+              .includes(searchValue),
+        );
 
       const matchesCategory =
         categoryFilter === "all" || ticket.category === categoryFilter;
@@ -88,13 +108,9 @@ function TicketsPage() {
 
       if (reviewFilter === "correct") {
         matchesReview = isTrue(ticket.analysis_correct);
-      }
-
-      if (reviewFilter === "incorrect") {
+      } else if (reviewFilter === "incorrect") {
         matchesReview = isFalse(ticket.analysis_correct);
-      }
-
-      if (reviewFilter === "pending") {
+      } else if (reviewFilter === "pending") {
         matchesReview = isPendingReview(ticket.analysis_correct);
       }
 
@@ -107,9 +123,7 @@ function TicketsPage() {
       <div className="tickets-heading">
         <div>
           <span className="eyebrow">TICKET HISTORY</span>
-
           <h1>Tickets</h1>
-
           <p>
             Review previously analysed support tickets and verify the AI
             classification.
@@ -117,31 +131,34 @@ function TicketsPage() {
         </div>
 
         <button
+          type="button"
           className="secondary-button"
-          onClick={fetchTickets}
+          onClick={refreshTickets}
           disabled={loading}
         >
-          <RefreshCw size={14} className={loading ? "refresh-spinning" : ""} />
+          <RefreshCw
+            size={14}
+            className={loading ? "refresh-spinning" : ""}
+            aria-hidden="true"
+          />
           Refresh
         </button>
       </div>
 
       <div className="ticket-summary">
         <SummaryItem label="Tickets" value={tickets.length} />
-
         <SummaryItem label="Reviewed" value={reviewedCount} />
-
         <SummaryItem label="Correct" value={correctCount} />
-
         <SummaryItem label="Pending" value={pendingCount} />
       </div>
 
       <div className="ticket-toolbar">
         <div className="ticket-search">
-          <Search size={15} />
+          <Search size={15} aria-hidden="true" />
 
           <input
-            type="text"
+            type="search"
+            aria-label="Search tickets"
             placeholder="Search ticket, subject or message..."
             value={search}
             onChange={(event) => setSearch(event.target.value)}
@@ -149,6 +166,7 @@ function TicketsPage() {
         </div>
 
         <select
+          aria-label="Filter by category"
           value={categoryFilter}
           onChange={(event) => setCategoryFilter(event.target.value)}
         >
@@ -162,41 +180,36 @@ function TicketsPage() {
         </select>
 
         <select
+          aria-label="Filter by review status"
           value={reviewFilter}
           onChange={(event) => setReviewFilter(event.target.value)}
         >
           <option value="all">All reviews</option>
-
           <option value="pending">Pending</option>
-
           <option value="correct">Correct</option>
-
           <option value="incorrect">Incorrect</option>
         </select>
       </div>
 
       {error && (
-        <div className="api-error">
+        <div className="api-error" role="alert">
           <strong>Unable to load tickets</strong>
-
           <p>{error}</p>
+          <p>Check that the backend is running, then click Refresh.</p>
         </div>
       )}
 
       {loading && (
-        <div className="ticket-loading">
-          <div className="spinner" />
-
+        <div className="ticket-loading" role="status">
+          <div className="spinner" aria-hidden="true" />
           <p>Loading ticket history...</p>
         </div>
       )}
 
       {!loading && !error && filteredTickets.length === 0 && (
         <div className="tickets-empty">
-          <Inbox size={30} />
-
+          <Inbox size={30} aria-hidden="true" />
           <h3>No tickets found</h3>
-
           <p>Analyse a support email or change your filters.</p>
         </div>
       )}
@@ -207,32 +220,43 @@ function TicketsPage() {
             <table className="tickets-table">
               <thead>
                 <tr>
-                  <th>Ticket</th>
-                  <th>Request</th>
-                  <th>Category</th>
-                  <th>Urgency</th>
-                  <th>SLA</th>
-                  <th>Date Received</th>
-                  <th>Expected Response</th>
-                  <th>Review</th>
-                  <th></th>
+                  <th scope="col">Ticket</th>
+                  <th scope="col">Request</th>
+                  <th scope="col">Category</th>
+                  <th scope="col">Urgency</th>
+                  <th scope="col">SLA</th>
+                  <th scope="col">Date Received</th>
+                  <th scope="col">Expected Response</th>
+                  <th scope="col">Review</th>
+                  <th scope="col" aria-label="Open ticket" />
                 </tr>
               </thead>
 
               <tbody>
-                {filteredTickets.map((ticket, index) => (
+                {filteredTickets.map((ticket) => (
                   <tr
-                    key={ticket.id || `ticket-${index}`}
+                    key={ticket.id}
                     onClick={() =>
                       navigate(`/tickets/${encodeURIComponent(ticket.id)}`)
                     }
                   >
-                    <td className="ticket-id">{formatTicketId(ticket.id)}</td>
+                    <td className="ticket-id">
+                      <button
+                        type="button"
+                        className="secondary-button"
+                        aria-label={`Open ticket ${ticket.id}`}
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          navigate(`/tickets/${encodeURIComponent(ticket.id)}`);
+                        }}
+                      >
+                        {formatTicketId(ticket.id)}
+                      </button>
+                    </td>
 
                     <td>
                       <div className="ticket-request">
                         <strong>{ticket.subject || "No subject"}</strong>
-
                         <span>{truncate(ticket.body, 95)}</span>
                       </div>
                     </td>
@@ -248,7 +272,7 @@ function TicketsPage() {
                     </td>
 
                     <td>
-                      <span className="ticket-sla">{ticket.sla}</span>
+                      <span className="ticket-sla">{ticket.sla || "—"}</span>
                     </td>
 
                     <td>
@@ -268,7 +292,11 @@ function TicketsPage() {
                     </td>
 
                     <td>
-                      <ChevronRight size={15} className="ticket-chevron" />
+                      <ChevronRight
+                        size={15}
+                        className="ticket-chevron"
+                        aria-hidden="true"
+                      />
                     </td>
                   </tr>
                 ))}
@@ -298,13 +326,11 @@ function ReviewStatus({ value }) {
   if (isTrue(value)) {
     statusClass = "correct";
     label = "Correct";
-    icon = <Check size={11} />;
-  }
-
-  if (isFalse(value)) {
+    icon = <Check size={11} aria-hidden="true" />;
+  } else if (isFalse(value)) {
     statusClass = "incorrect";
     label = "Incorrect";
-    icon = <X size={11} />;
+    icon = <X size={11} aria-hidden="true" />;
   }
 
   return (
@@ -326,9 +352,7 @@ function UrgencyBadge({ urgency }) {
 }
 
 function formatCategory(category) {
-  if (!category) {
-    return "Unknown";
-  }
+  if (!category) return "Unknown";
 
   return String(category)
     .replaceAll("_", " ")
@@ -336,19 +360,17 @@ function formatCategory(category) {
 }
 
 function formatTicketId(value) {
-  return value ? String(value) : "—";
+  return value === null || value === undefined || value === ""
+    ? "—"
+    : String(value);
 }
 
 function formatDate(value) {
-  if (!value) {
-    return "—";
-  }
+  if (!value) return "—";
 
   const date = new Date(value);
 
-  if (Number.isNaN(date.getTime())) {
-    return "—";
-  }
+  if (Number.isNaN(date.getTime())) return "—";
 
   return date.toLocaleString("en-SG", {
     dateStyle: "medium",
@@ -357,15 +379,11 @@ function formatDate(value) {
 }
 
 function getExpectedResponseDate(createdAt, sla) {
-  if (!createdAt || !sla) {
-    return "—";
-  }
+  if (!createdAt || !sla) return "—";
 
   const receivedDate = new Date(createdAt);
 
-  if (Number.isNaN(receivedDate.getTime())) {
-    return "—";
-  }
+  if (Number.isNaN(receivedDate.getTime())) return "—";
 
   const slaValue = String(sla).trim().toLowerCase();
 
@@ -390,7 +408,6 @@ function getExpectedResponseDate(createdAt, sla) {
 
 function addBusinessDays(startDate, days) {
   const result = new Date(startDate);
-
   let businessDaysAdded = 0;
 
   while (businessDaysAdded < days) {
@@ -406,7 +423,6 @@ function addBusinessDays(startDate, days) {
 
 function addBusinessHours(startDate, hours) {
   const result = new Date(startDate);
-
   let hoursRemaining = hours;
 
   while (hoursRemaining > 0) {
@@ -422,22 +438,15 @@ function addBusinessHours(startDate, hours) {
 
 function isBusinessDay(date) {
   const day = date.getDay();
-
   return day !== 0 && day !== 6;
 }
 
 function truncate(value, length) {
-  if (!value) {
-    return "No message content.";
-  }
+  if (!value) return "No message content.";
 
   const text = String(value).replace(/\s+/g, " ").trim();
 
-  if (text.length <= length) {
-    return text;
-  }
-
-  return `${text.slice(0, length)}...`;
+  return text.length <= length ? text : `${text.slice(0, length)}...`;
 }
 
 function isTrue(value) {
@@ -449,12 +458,7 @@ function isFalse(value) {
 }
 
 function isPendingReview(value) {
-  return (
-    value === null ||
-    value === undefined ||
-    value === "" ||
-    (!isTrue(value) && !isFalse(value))
-  );
+  return !isTrue(value) && !isFalse(value);
 }
 
 export default TicketsPage;

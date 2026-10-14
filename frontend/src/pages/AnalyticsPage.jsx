@@ -9,20 +9,88 @@ import { API_URL } from "../config";
 
 function AnalyticsPage() {
   const [tickets, setTickets] = useState([]);
-
-  const fetchTickets = async () => {
-    try {
-      const response = await fetch(`${API_URL}/api/tickets`);
-      const data = await response.json();
-      setTickets(data);
-    } catch (error) {
-      console.error("Error fetching tickets:", error);
-    }
-  };
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   useEffect(() => {
+    const controller = new AbortController();
+
+    async function fetchTickets() {
+      try {
+        const response = await fetch(`${API_URL}/api/tickets`, {
+          signal: controller.signal,
+        });
+
+        if (!response.ok) {
+          throw new Error(`Unable to load analytics (${response.status}).`);
+        }
+
+        const data = await response.json();
+
+        if (
+          !Array.isArray(data) ||
+          data.some(
+            (ticket) =>
+              ticket === null ||
+              typeof ticket !== "object" ||
+              Array.isArray(ticket),
+          )
+        ) {
+          throw new Error("The API returned an invalid ticket list.");
+        }
+
+        if (!controller.signal.aborted) {
+          setTickets(data);
+        }
+      } catch (err) {
+        if (!controller.signal.aborted) {
+          setError(err.message || "Unable to load analytics.");
+        }
+      } finally {
+        if (!controller.signal.aborted) {
+          setLoading(false);
+        }
+      }
+    }
+
     fetchTickets();
+
+    return () => controller.abort();
   }, []);
+
+  const heading = (
+    <div className="analytics-heading">
+      <span className="eyebrow">SYSTEM INSIGHTS</span>
+      <h1>Analytics</h1>
+      <p>Overview of support ticket classifications and routing decisions.</p>
+    </div>
+  );
+
+  if (loading) {
+    return (
+      <div className="analytics-page">
+        {heading}
+
+        <div className="loading-state" role="status">
+          Loading analytics...
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="analytics-page">
+        {heading}
+
+        <div className="api-error" role="alert">
+          <strong>Unable to load analytics</strong>
+          <p>{error}</p>
+          <p>Check that the backend is running, then reload this page.</p>
+        </div>
+      </div>
+    );
+  }
 
   const total = tickets.length;
 
@@ -46,21 +114,16 @@ function AnalyticsPage() {
 
   const categoryCounts = tickets.reduce((counts, ticket) => {
     const category = ticket.category || "unknown";
-
     counts[category] = (counts[category] || 0) + 1;
-
     return counts;
-  }, {});
+  }, Object.create(null));
+
+  // GET /api/tickets already returns newest tickets first.
+  const recentTickets = tickets.slice(0, 10);
 
   return (
     <div className="analytics-page">
-      <div className="analytics-heading">
-        <span className="eyebrow">SYSTEM INSIGHTS</span>
-
-        <h1>Analytics</h1>
-
-        <p>Overview of support ticket classifications and routing decisions.</p>
-      </div>
+      {heading}
 
       <div className="analytics-metrics">
         <AnalyticsCard
@@ -70,7 +133,7 @@ function AnalyticsPage() {
         />
 
         <AnalyticsCard
-          title="Auto Replies"
+          title="Auto Reply Decisions"
           value={autoReplies}
           icon={<Bot size={20} />}
         />
@@ -82,7 +145,7 @@ function AnalyticsPage() {
         />
 
         <AnalyticsCard
-          title="Avg. Confidence"
+          title="Avg. Model Confidence"
           value={`${averageConfidence}%`}
           icon={<ChartNoAxesColumnIncreasing size={20} />}
         />
@@ -92,11 +155,10 @@ function AnalyticsPage() {
         <section className="analytics-panel">
           <div className="panel-heading">
             <span className="eyebrow">CLASSIFICATION</span>
-
             <h2>Categories</h2>
           </div>
 
-          {Object.keys(categoryCounts).length === 0 ? (
+          {total === 0 ? (
             <EmptyAnalytics />
           ) : (
             <div className="category-list">
@@ -107,16 +169,13 @@ function AnalyticsPage() {
                   <div className="category-row" key={category}>
                     <div className="category-info">
                       <span>{formatCategory(category)}</span>
-
                       <strong>{count}</strong>
                     </div>
 
-                    <div className="analytics-progress">
+                    <div className="analytics-progress" aria-hidden="true">
                       <div
                         className="analytics-progress-fill"
-                        style={{
-                          width: `${percentage}%`,
-                        }}
+                        style={{ width: `${percentage}%` }}
                       />
                     </div>
                   </div>
@@ -129,7 +188,6 @@ function AnalyticsPage() {
         <section className="analytics-panel">
           <div className="panel-heading">
             <span className="eyebrow">ROUTING</span>
-
             <h2>Decision Breakdown</h2>
           </div>
 
@@ -152,54 +210,49 @@ function AnalyticsPage() {
       <section className="analytics-panel recent-panel">
         <div className="panel-heading">
           <span className="eyebrow">RECENT ACTIVITY</span>
-
           <h2>Recent Analyses</h2>
         </div>
 
-        {tickets.length === 0 ? (
+        {total === 0 ? (
           <EmptyAnalytics />
         ) : (
           <div className="analytics-table-wrapper">
             <table className="analytics-table">
               <thead>
                 <tr>
-                  <th>Category</th>
-                  <th>Urgency</th>
-                  <th>Decision</th>
-                  <th>Confidence</th>
+                  <th scope="col">Category</th>
+                  <th scope="col">Urgency</th>
+                  <th scope="col">Decision</th>
+                  <th scope="col">Confidence</th>
                 </tr>
               </thead>
 
               <tbody>
-                {tickets
-                  .slice()
-                  .reverse()
-                  .slice(0, 10)
-                  .map((ticket, index) => (
-                    <tr key={index}>
-                      <td>{formatCategory(ticket.category)}</td>
+                {recentTickets.map((ticket) => (
+                  <tr key={ticket.id}>
+                    <td>{formatCategory(ticket.category)}</td>
 
-                      <td>
-                        <span className="table-urgency">
-                          {ticket.urgency || "Unknown"}
-                        </span>
-                      </td>
+                    <td>
+                      <span className="table-urgency">
+                        {ticket.urgency || "Unknown"}
+                      </span>
+                    </td>
 
-                      <td>
-                        <span
-                          className={`decision-badge ${
-                            ticket.decision === "AUTO_REPLY"
-                              ? "auto"
-                              : "escalated"
-                          }`}
-                        >
-                          {ticket.decision}
-                        </span>
-                      </td>
+                    <td>
+                      <span
+                        className={`decision-badge ${
+                          ticket.decision === "AUTO_REPLY"
+                            ? "auto"
+                            : "escalated"
+                        }`}
+                      >
+                        {ticket.decision || "Unknown"}
+                      </span>
+                    </td>
 
-                      <td>{ticket.confidence ?? 0}%</td>
-                    </tr>
-                  ))}
+                    <td>{ticket.confidence ?? 0}%</td>
+                  </tr>
+                ))}
               </tbody>
             </table>
           </div>
@@ -214,8 +267,9 @@ function AnalyticsCard({ title, value, icon }) {
     <div className="analytics-card">
       <div className="analytics-card-top">
         <span>{title}</span>
-
-        <div className="analytics-card-icon">{icon}</div>
+        <div className="analytics-card-icon" aria-hidden="true">
+          {icon}
+        </div>
       </div>
 
       <strong>{value}</strong>
@@ -233,12 +287,10 @@ function RoutingRow({ label, value, total }) {
         <strong>{percentage}%</strong>
       </div>
 
-      <div className="analytics-progress">
+      <div className="analytics-progress" aria-hidden="true">
         <div
           className="analytics-progress-fill"
-          style={{
-            width: `${percentage}%`,
-          }}
+          style={{ width: `${percentage}%` }}
         />
       </div>
 
@@ -252,10 +304,8 @@ function RoutingRow({ label, value, total }) {
 function EmptyAnalytics() {
   return (
     <div className="empty-analytics">
-      <ChartNoAxesColumnIncreasing size={28} />
-
+      <ChartNoAxesColumnIncreasing size={28} aria-hidden="true" />
       <p>No ticket data yet.</p>
-
       <span>Analyse some emails to populate this view.</span>
     </div>
   );
@@ -264,7 +314,7 @@ function EmptyAnalytics() {
 function formatCategory(category) {
   if (!category) return "Unknown";
 
-  return category
+  return String(category)
     .replaceAll("_", " ")
     .replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
