@@ -1,284 +1,614 @@
 # SupportFlow — AI Support Ticket Triage & Auto-Escalation Engine
 
-An intelligent, production-ready support ticket triage and routing platform designed to ingest incoming customer tickets/emails, classify intent and urgency, verify answerability against internal knowledge base (FAQ) documents, auto-respond to routine inquiries, and dynamically escalate high-severity incidents with strict SLA tracking.
+SupportFlow classifies incoming support tickets, retrieves relevant knowledge base articles, checks whether an automated answer is appropriate, and escalates tickets that require human attention.
 
----
+The React dashboard supports email uploads, ticket history, human review, severity updates, and analytics.
 
-## 📌 Executive Summary & Problem Solved
+## Features
 
-Support teams often struggle with high ticket volumes, delayed response times for critical incidents, and repetitive routine inquiries (e.g., password resets, standard billing queries, tracking updates). 
+- Classifies tickets into support intent categories.
+- Assigns severity from `SEV1` to `SEV5`.
+- Always escalates `SEV1` and `SEV2` incidents.
+- Escalates tickets with confidence below 80%.
+- Checks whether the knowledge base supports an automated response.
+- Flags potential prompt injection attempts.
+- Generates responses using retrieved knowledge base content.
+- Stores ticket history and human feedback in SQLite.
+- Processes sample tickets through the same pipeline used by the API.
 
-**SupportFlow** automates the first line of support by:
-1. **Accelerating Response Time:** Resolving common, FAQ-covered questions instantly with grounded, hallucination-free AI responses (`AUTO_REPLY`).
-2. **Safeguarding High-Severity Incidents:** Accurately identifying critical system outages, security breaches, and urgent customer issues (`SEV1` / `SEV2`), auto-escalating them directly to human agents with prioritized SLAs.
-3. **Ensuring Reliability & Safety:** Incorporating prompt-injection guards, confidence thresholds (<80% auto-escalates), and strict answerability checks to prevent incorrect or fabricated responses.
-4. **Enabling Human-in-the-Loop (HITL) Quality Control:** Providing support managers and helpdesk agents a rich UI to review triage decisions, override categories/severities, and monitor triage accuracy metrics.
-
----
-
-## 🏗️ System Architecture & Triage Workflow
+## Architecture
 
 ```mermaid
 flowchart TD
-    A[Incoming Ticket / EML File] --> B[Input Sanitization & Safety Check]
-    B -- Suspicious / Prompt Injection --> ESC1[Escalate: SEV3 Suspicious]
-    B -- Safe --> C[ChromaDB Vector Retrieval]
-    
-    C --> D[Relevant Knowledge Base Snippets]
-    D --> E[LLM Classifier & Urgency Assessor]
-    
-    E -->|Category, Urgency SEV1-5, Confidence| F[Answerability Verifier]
-    
-    F -->|Can FAQ fully resolve issue?| G{Decision Router}
-    
-    G -- Confidence < 80% OR Cannot Auto-Reply --> H[Route: ESCALATE to Agent]
-    G -- High Confidence & Verified by FAQ --> I[RAG Auto-Responder]
-    
-    H --> J[Log to Processed Tickets CSV / DB]
-    I --> J
-    
-    J --> K[Staff Dashboard: Review & Analytics]
+    A[Incoming support ticket] --> B[Safety check]
+    B -->|Suspicious| H[Escalate to human support]
+    B -->|Passes| C[Retrieve knowledge base articles]
+    C --> D[Classify intent, severity and confidence]
+    D --> E[Check answerability]
+    E --> F{Routing policy}
+    F -->|SEV1 or SEV2| H
+    F -->|Low confidence or unanswerable| H
+    F -->|Eligible for automated response| G[Generate grounded response]
+    H --> I[Store ticket in SQLite]
+    G --> I
+    I --> J[Dashboard and human review]
 ```
 
-### The 6-Stage Pipeline
+### Pipeline components
 
-| Stage | Component | Description |
-|---|---|---|
-| **1. Safety Guard** | `safety.py` | Detects adversarial prompt injections or override attempts (e.g., *"ignore previous instructions"*). |
-| **2. RAG Retrieval** | `vector.py` / `retriever.py` | Embeds the ticket and queries ChromaDB for relevant knowledge base procedures (`billing`, `shipping`, `login`, `password reset`). |
-| **3. Intent & Urgency Classifier** | `classifier.py` | Classifies category, assigns urgency (`SEV1`–`SEV5`), confidence score (0–100), and reasoning using Ollama (`llama3.2`). |
-| **4. Answerability Verification** | `answerability.py` | Validates whether the knowledge base contains a definitive resolution. If human intervention, database lookups, or account access is needed, auto-reply is disallowed. |
-| **5. Policy Router** | `router.py` / `triage.py` | Enforces routing decisions. If non-answerable, lower severity tickets are automatically bumped to `SEV3` (3 days SLA) for human review. |
-| **6. Grounded Generation** | `responder.py` | Synthesizes an empathetic, strictly knowledge-grounded customer response with automated disclaimer footers. |
+| Component          | Responsibility                                                               |
+| ------------------ | ---------------------------------------------------------------------------- |
+| `safety.py`        | Detect potential prompt injection attempts.                                  |
+| `vector.py`        | Create the knowledge base vector store using Ollama embeddings and ChromaDB. |
+| `retriever.py`     | Retrieve knowledge base articles for a ticket.                               |
+| `classifier.py`    | Determine category, severity, confidence, and reasoning.                     |
+| `answerability.py` | Check whether the knowledge base supports an automated answer.               |
+| `router.py`        | Apply escalation and automatic reply policies.                               |
+| `responder.py`     | Generate a customer-facing response from the retrieved context.              |
+| `triage.py`        | Coordinate the shared ticket processing pipeline.                            |
+| `api.py`           | Expose API endpoints and persist ticket records.                             |
+| `main.py`          | Run the shared pipeline against the sample dataset.                          |
 
----
+## Categories
 
-## ⚡ Severity Matrix & SLA Enforcements
+The classifier uses these intent categories:
 
-The engine assigns strict Service Level Agreements (SLAs) based on operational impact and urgency:
+- `password_reset`
+- `billing_question`
+- `shipping_delay`
+- `login_issues`
+- `other`
 
-| Severity | Impact Level | Target Resolution SLA | Routing Behavior |
-|---|---|---|---|
-| **SEV1** | **Critical** (System-wide outage, active breach, severe data loss) | **4 Hours** | Immediate escalation to on-call engineering |
-| **SEV2** | **High** (Significant business impairment, blocked workflow) | **1 Day** | High-priority escalation to senior support |
-| **SEV3** | **Medium** (Standard bug, inquiry requiring human investigation) | **3 Days** | Routed to standard support queue |
-| **SEV4** | **Low** (Minor issue, cosmetic bug, general questions) | **4 Days** | Eligible for `AUTO_REPLY` if answerable |
-| **SEV5** | **Informational** (Feedback, feature requests, minor docs) | **5 Days** | Eligible for `AUTO_REPLY` if answerable |
+Routing decisions are separate from intent categories:
 
-> ⚠️ **Escalation SLA Rule:** If a ticket is classified as `SEV4` or `SEV5` but is deemed unanswerable by the knowledge base, SupportFlow automatically promotes the urgency to **`SEV3` (3 days SLA)** to guarantee timely human review.
+- `AUTO_REPLY`
+- `ESCALATE`
 
----
+## Severity and SLA policy
 
-## 💻 Tech Stack
+| Severity | Typical impact                                                            | SLA target | Routing policy                                          |
+| -------- | ------------------------------------------------------------------------- | ---------- | ------------------------------------------------------- |
+| `SEV1`   | Widespread outage, major security breach, or critical service failure     | 4 hours    | Always escalate                                         |
+| `SEV2`   | Major disruption affecting multiple users without an immediate workaround | 1 day      | Always escalate                                         |
+| `SEV3`   | Standard functional issue or individual problem                           | 3 days     | Automatic reply only when other eligibility checks pass |
+| `SEV4`   | Minor issue or general question                                           | 4 days     | Automatic reply only when other eligibility checks pass |
+| `SEV5`   | Informational inquiry or feature request                                  | 5 days     | Automatic reply only when other eligibility checks pass |
+
+A ticket must pass the safety, confidence, and answerability checks before it can receive an automated response.
+
+When a `SEV4` or `SEV5` ticket requires escalation, the pipeline promotes it to `SEV3` with a three-day SLA target.
+
+SLA values are recorded targets. Operational alerting and enforcement require integration with your support processes.
+
+## Tech stack
 
 ### Backend
-- **Framework:** FastAPI (Python 3.10+)
-- **LLM Orchestration:** LangChain (`langchain-core`, `langchain-community`, `langchain-ollama`)
-- **Local AI Model:** Ollama running LLaMA 3.2 (`llama3.2`)
-- **Vector Database:** ChromaDB (`langchain-chroma`, `chromadb`)
-- **Data Persistence:** Pandas & CSV audit logs (`output/tickets_processed.csv`)
-- **Testing:** Pytest
+
+- Python 3.10+
+- FastAPI
+- Pydantic
+- SQLite
+- LangChain
+- Ollama
+- ChromaDB
+- Pandas
+- Pytest
 
 ### Frontend
-- **Framework:** React 19 + Vite
-- **UI & Icons:** Lucide React, modern reactive CSS
-- **Routing:** React Router DOM (v7)
-- **Features:** Drag-and-drop `.eml` email parser, live triage visualizer, ticket management list, human-in-the-loop review portal, system analytics.
 
----
+- React
+- Vite
+- React Router
+- Lucide React
+- CSS
 
-## 📂 Project Structure
+## Project structure
 
 ```text
-supporticketriage/
-├── README.md                      # Project documentation and guide
+support-triage/
+├── README.md
+├── .gitignore
 ├── backend/
-│   ├── api.py                     # FastAPI REST API endpoints & CORS configuration
-│   ├── triage.py                  # Core triage pipeline orchestration
-│   ├── classifier.py              # Zero-shot LLM classification & severity scoring
-│   ├── answerability.py           # Verification step for FAQ resolution feasibility
-│   ├── responder.py               # RAG response generator
-│   ├── router.py                  # Routing logic (AUTO_REPLY vs. ESCALATE)
-│   ├── safety.py                  # Prompt-injection detection
-│   ├── vector.py                  # ChromaDB vector store initialization
-│   ├── retriever.py               # Similarity retrieval from vector store
-│   ├── main.py                    # Standalone batch execution runner
-│   ├── evaluate.py                # Pipeline evaluation & accuracy metrics
-│   ├── requirements.txt           # Python dependencies
-│   ├── knowledgebase/             # Markdown FAQ documents
+│   ├── api.py
+│   ├── triage.py
+│   ├── classifier.py
+│   ├── answerability.py
+│   ├── responder.py
+│   ├── router.py
+│   ├── safety.py
+│   ├── vector.py
+│   ├── retriever.py
+│   ├── config.py
+│   ├── main.py
+│   ├── evaluate.py
+│   ├── resultwriter.py
+│   ├── requirements.txt
+│   ├── knowledgebase/
 │   │   ├── billing.md
 │   │   ├── login_issues.md
 │   │   ├── password_reset.md
 │   │   └── shipping.md
 │   ├── data/
-│   │   └── sample_tickets.csv     # Benchmark dataset for evaluation
+│   │   └── sample_tickets.csv
 │   ├── output/
-│   │   └── tickets_processed.csv  # Historical triaged tickets & human feedback logs
+│   │   ├── supportflow.db
+│   │   └── triage_results.csv
 │   ├── src/
-│   │   ├── kb.py                  # Knowledge base document loader
-│   │   └── ticketloader.py        # CSV ticket parser
+│   │   ├── kb.py
+│   │   └── ticketloader.py
 │   └── test/
-│       └── samplerouting.py       # Unit and routing tests
+│       └── samplerouting.py
 ├── frontend/
-│   ├── src/
-│   │   ├── components/
-│   │   │   ├── EmailUploader.jsx  # Drag-and-drop .eml file parser
-│   │   │   ├── EmailPreview.jsx   # Parsed email preview card
-│   │   │   ├── TriageResult.jsx   # Detailed triage output & badge breakdown
-│   │   │   ├── Header.jsx         # App navbar
-│   │   │   ├── Sidebar.jsx        # Navigation sidebar
-│   │   │   └── LoadingSpinner.jsx
-│   │   ├── pages/
-│   │   │   ├── TriagePage.jsx     # Live single-ticket triage interface
-│   │   │   ├── TicketsPage.jsx    # Tickets log, filtering, and status tracking
-│   │   │   ├── TicketDetails.jsx  # Human review, severity adjustments, manual replies
-│   │   │   └── AnalyticsPage.jsx  # High-level metrics & accuracy rates
-│   │   ├── services/
-│   │   │   └── triageApi.jsx      # API client for backend communication
-│   │   ├── App.jsx                # Router & root state
-│   │   └── App.css                # Application styles
 │   ├── package.json
-│   └── vite.config.js
-└── test_emails/                   # Directory for test .eml files
+│   ├── package-lock.json
+│   ├── vite.config.js
+│   ├── .env.example
+│   └── src/
+│       ├── components/
+│       ├── pages/
+│       ├── services/
+│       ├── App.jsx
+│       ├── App.css
+│       └── config.js
+└── test_emails/
+    ├── sample_password_reset.eml
+    ├── sample_sev1_outage.eml
+    └── sample_prompt_injection.eml
 ```
 
----
+The backend creates runtime output files when needed. Do not commit generated databases, result files, environment secrets, or bytecode.
 
-## 🚀 Getting Started
+## Getting started
 
 ### Prerequisites
 
-1. **Python 3.10+** installed.
-2. **Node.js (v18+)** and **npm** installed.
-3. **Ollama** installed and running locally with the LLaMA 3.2 model:
-   ```bash
-   ollama run llama3.2
-   ```
+Install:
 
----
+1. Python 3.10 or newer.
+2. A Node.js version compatible with the Vite version in `frontend/package.json`.
+3. npm.
+4. Ollama.
 
-### 1. Backend Setup
+### 1. Install both Ollama models
 
-1. Open your terminal in the `backend/` directory:
-   ```bash
-   cd backend
-   ```
+SupportFlow uses two different models:
 
-2. Create and activate a Python virtual environment:
-   ```bash
-   # Windows (PowerShell)
-   python -m venv .venv
-   .venv\Scripts\Activate.ps1
+| Purpose                                            | Model               | Used by                                          |
+| -------------------------------------------------- | ------------------- | ------------------------------------------------ |
+| Text generation, classification, and answerability | `llama3.2`          | Classifier, answerability checker, and responder |
+| Knowledge base and ticket embeddings               | `mxbai-embed-large` | `backend/vector.py`                              |
 
-   # Linux/macOS
-   python3 -m venv .venv
-   source .venv/bin/activate
-   ```
+Download both models:
 
-3. Install required Python packages:
-   ```bash
-   pip install -r requirements.txt
-   ```
+```bash
+ollama pull llama3.2
+ollama pull mxbai-embed-large
+```
 
-4. (Optional) Configure environment variables:
-   ```bash
-   cp .env.example .env
-   ```
+Confirm that both are installed:
 
-5. Start the FastAPI development server:
-   ```bash
-   uvicorn api:app --reload --host 127.0.0.1 --port 8000
-   ```
-   The API will be available at: **`http://127.0.0.1:8000`**  
-   Interactive API docs (Swagger): **`http://127.0.0.1:8000/docs`**
+```bash
+ollama list
+```
 
----
+The list should include:
 
-### 2. Frontend Setup
+```text
+llama3.2:latest
+mxbai-embed-large:latest
+```
 
-1. Open a new terminal in the `frontend/` directory:
-   ```bash
-   cd frontend
-   ```
+Downloading only `llama3.2` is insufficient. Retrieval also requires `mxbai-embed-large`.
 
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
+Keep Ollama running while using the application. If it is not already running through the desktop application or a background service, start it:
 
-3. (Optional) Configure environment variables:
-   ```bash
-   cp .env.example .env
-   ```
+```bash
+ollama serve
+```
 
-4. Start the Vite development server:
-   ```bash
-   npm run dev
-   ```
-   The dashboard will be available at: **`http://localhost:5173`**
+The default Ollama URL is:
 
----
+```text
+http://localhost:11434
+```
 
-## 📡 API Reference
+### 2. Clone the repository
 
-### 1. `POST /api/triage`
-Triages an incoming support ticket. Runs the 6-stage pipeline and stores the result.
+```bash
+git clone https://github.com/angelfila2/support-triage.git
+cd support-triage
+```
 
-**Request Body:**
+### 3. Set up the backend
+
+Open a terminal in the backend directory:
+
+```bash
+cd backend
+```
+
+Create a virtual environment:
+
+```bash
+python -m venv .venv
+```
+
+Activate it on Windows PowerShell:
+
+```powershell
+.\.venv\Scripts\Activate.ps1
+```
+
+Or activate it on Linux/macOS:
+
+```bash
+source .venv/bin/activate
+```
+
+Install dependencies:
+
+```bash
+python -m pip install -r requirements.txt
+```
+
+Start the backend:
+
+```bash
+uvicorn api:app --reload --host 127.0.0.1 --port 8000
+```
+
+Backend URLs:
+
+- API: http://127.0.0.1:8000
+- Interactive API documentation: http://127.0.0.1:8000/docs
+
+Knowledge base initialization may take time on the first startup because the documents must be embedded.
+
+### 4. Set up the frontend
+
+Open another terminal from the repository root:
+
+```bash
+cd frontend
+npm install
+```
+
+Optionally copy the frontend environment example.
+
+Windows PowerShell:
+
+```powershell
+Copy-Item .env.example .env
+```
+
+Linux/macOS:
+
+```bash
+cp .env.example .env
+```
+
+The frontend uses this API URL by default:
+
+```text
+http://127.0.0.1:8000
+```
+
+To override it, set the following in `frontend/.env`:
+
+```dotenv
+VITE_API_URL=http://127.0.0.1:8000
+```
+
+Restart the Vite development server after changing environment variables.
+
+Start the frontend:
+
+```bash
+npm run dev
+```
+
+Open the URL printed by Vite, normally:
+
+```text
+http://localhost:5173
+```
+
+## Backend configuration
+
+Backend settings are defined in `backend/config.py`.
+
+You can override them using environment variables or a local `backend/.env` file.
+
+Example:
+
+```dotenv
+OLLAMA_MODEL=llama3.2
+OLLAMA_BASE_URL=http://localhost:11434
+CORS_ORIGINS=http://localhost:5173,http://127.0.0.1:5173
+```
+
+Supported path overrides include:
+
+- `OUTPUT_DIR`
+- `TICKETS_FILE`
+- `KNOWLEDGE_BASE_DIR`
+- `DATA_DIR`
+- `SAMPLE_TICKETS_FILE`
+- `TRIAGE_RESULTS_FILE`
+
+Use absolute paths when overriding directories to avoid ambiguity.
+
+The embedding model used by `backend/vector.py` is `mxbai-embed-large`. Keep the installed embedding model aligned with the model configured in that file.
+
+## Using the dashboard
+
+1. Download a support email as an `.eml` file.
+2. Upload it through the triage page.
+3. Review the extracted subject and body.
+4. Start the analysis.
+5. Inspect the category, severity, confidence, routing decision, and response.
+6. Open ticket history to review stored tickets.
+7. Use ticket details to record classification feedback or update response status.
+
+Example email files are available in `test_emails/`.
+
+## API reference
+
+### Health check
+
+```http
+GET /
+```
+
+Returns basic application status.
+
+### Triage a ticket
+
+```http
+POST /api/triage
+```
+
+Request:
+
 ```json
 {
-  "subject": "Can't log into my account",
-  "body": "I reset my password but the login screen says invalid credentials."
+  "subject": "Password reset link expired",
+  "body": "I forgot my password, but the reset link has expired. How can I request another?"
 }
 ```
 
-**Response (Example - AUTO_REPLY):**
+Example response:
+
 ```json
 {
-  "id": "c1f7a6b2-...",
+  "id": "1",
+  "created_at": "2026-01-01T12:00:00",
   "category": "password_reset",
   "urgency": "SEV4",
-  "confidence": 92,
+  "confidence": 95,
   "is_suspicious": false,
   "decision": "AUTO_REPLY",
-  "reason": "Matches standard password reset troubleshooting procedure in knowledge base.",
-  "response": "Hello, thank you for reaching out. Please make sure to clear your browser cache and follow the password reset link within 15 minutes...",
-  "sla": "4 days",
-  "retrieved_sources": [".../password_reset.md"]
+  "reason": "The knowledge base documents how to request a new password reset link.",
+  "response": "Please request a new password reset email from the login page. Password reset links expire after 30 minutes.",
+  "retrieved_sources": ["password_reset.md"],
+  "sla": "4 days"
 }
 ```
 
-### 2. `GET /api/tickets`
-Retrieves all triaged tickets, including human review status and responses.
+Model-generated fields can vary.
 
-### 3. `PATCH /api/tickets/{ticket_id}/review`
-Allows human support agents to submit quality assurance feedback.
+### List tickets
 
-**Request Body:**
+```http
+GET /api/tickets
+```
+
+Returns stored tickets, ordered newest first.
+
+### Retrieve one ticket
+
+```http
+GET /api/tickets/{ticket_id}
+```
+
+Returns the ticket matching the supplied ID.
+
+Returns `404` if the ticket does not exist.
+
+### Save review feedback
+
+```http
+PATCH /api/tickets/{ticket_id}/review
+```
+
+Request when the classification is correct:
+
 ```json
 {
   "analysis_correct": true,
   "corrected_category": null,
-  "review_notes": "AI accurately identified the reset issue."
+  "review_notes": "The category matches the customer's issue."
 }
 ```
 
-### 4. `PATCH /api/tickets/{ticket_id}/respond`
-Updates severity, records agent notes, and marks the ticket as officially answered.
+Request when the classification is incorrect:
 
----
+```json
+{
+  "analysis_correct": false,
+  "corrected_category": "login_issues",
+  "review_notes": "The customer can reset their password but still cannot sign in."
+}
+```
 
-## 🔮 Roadmap & Future Improvements
+A corrected category is required when marking an analysis as incorrect.
 
-To transform this into a fully autonomous, enterprise-grade support ecosystem, the following enhancements are planned:
+### Update response status and severity
 
-- [ ] **Automated Mailbox Scanning (IMAP / MS Graph / Gmail API):** Background daemon or webhook listener to ingest `.eml` / MIME tickets directly from support inboxes (e.g. `support@company.com`).
-- [ ] **Real-time Escalation Alerts:** Integration with Slack, PagerDuty, or Microsoft Teams webhooks whenever a `SEV1` or `SEV2` ticket is triaged.
-- [ ] **Customer Memory & CRM Sync:** Cross-reference ticket history with customer profiles (e.g., Zendesk, Salesforce, HubSpot) to assess customer tier (Enterprise vs. Free) during SLA assignment.
-- [ ] **Persistent Vector Store:** Transition from in-memory Chroma instance to a persistent Chroma/Qdrant instance with automatic document re-indexing on file change.
-- [ ] **Human-Approved Auto-Reply Workflow:** Optional "semi-autonomous" mode where AI drafts replies but requires one-click agent sign-off before emailing the customer.
+```http
+PATCH /api/tickets/{ticket_id}/respond
+```
 
----
+Request:
 
-## 📄 License
-This project is licensed under the MIT License.
+```json
+{
+  "responded": true,
+  "urgency": "SEV3",
+  "response_notes": "An agent investigated the issue and contacted the customer."
+}
+```
+
+Records the response status, severity, SLA, timestamp, and agent notes.
+
+## Batch processing
+
+With the backend virtual environment active and Ollama running:
+
+```bash
+cd backend
+python main.py
+```
+
+The batch runner:
+
+1. Reads `data/sample_tickets.csv`.
+2. Calls the shared `triage_ticket()` pipeline for each ticket.
+3. Prints the results.
+4. Writes results to `output/triage_results.csv`.
+
+A successful run should process all 20 sample tickets without errors.
+
+The batch results file is regenerated on each run. It is separate from the SQLite ticket history maintained by the API.
+
+## Evaluation
+
+After generating batch results:
+
+```bash
+python evaluate.py
+```
+
+The current evaluator compares predicted categories against the dataset labels.
+
+The sample dataset contains historical labels that mix intent categories with escalation decisions. Treat the reported accuracy as a development diagnostic until intent and routing ground truth are separated.
+
+## Verifying the embedding setup
+
+Use these checks to confirm that Problem 4 is resolved:
+
+1. Confirm both models are installed:
+
+   ```bash
+   ollama list
+   ```
+
+2. Confirm Ollama is running.
+
+3. Start the backend:
+
+   ```bash
+   cd backend
+   uvicorn api:app --reload --host 127.0.0.1 --port 8000
+   ```
+
+4. Open:
+
+   ```text
+   http://127.0.0.1:8000/docs
+   ```
+
+5. Submit a password reset ticket through `POST /api/triage`.
+
+The request should complete without a missing embedding model or model-not-found error.
+
+## Troubleshooting
+
+### Embedding model not found
+
+If an error mentions `mxbai-embed-large` or a missing embedding model, run:
+
+```bash
+ollama pull mxbai-embed-large
+```
+
+Confirm installation:
+
+```bash
+ollama list
+```
+
+Then restart the backend.
+
+### Generation model not found
+
+Install the generation model:
+
+```bash
+ollama pull llama3.2
+```
+
+If you changed `OLLAMA_MODEL`, install that exact model instead.
+
+### Cannot connect to Ollama
+
+Confirm that Ollama is running:
+
+```bash
+ollama list
+```
+
+If necessary, start the server:
+
+```bash
+ollama serve
+```
+
+Check that `OLLAMA_BASE_URL` matches the running Ollama server.
+
+### Frontend cannot connect to the backend
+
+Check that:
+
+- FastAPI is running on port `8000`.
+- `VITE_API_URL` points to the backend.
+- `CORS_ORIGINS` includes the frontend origin.
+- The frontend development server was restarted after environment changes.
+
+### First request is slow
+
+Ollama may need to load the generation and embedding models into memory.
+
+Response times depend on hardware, model loading, and ticket length.
+
+### Batch results file is missing
+
+Generate it first:
+
+```bash
+cd backend
+python main.py
+```
+
+Then run:
+
+```bash
+python evaluate.py
+```
+
+## Limitations and planned improvements
+
+- Separate intent and routing evaluation labels.
+- Report precision, recall, and macro F1.
+- Combine classification and answerability into one structured model call.
+- Add manual subject and body entry to the dashboard.
+- Persist the vector store and filter retrieval by relevance.
+- Strengthen prompt injection handling.
+- Add Docker-based setup.
+- Integrate mailbox ingestion and escalation notifications.
+
+Automated responses should be validated against representative support tickets before operational use.
+
+## License
+
+See the repository's license file for applicable terms.
