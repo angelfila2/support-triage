@@ -1,0 +1,11 @@
+From: devops-lead@enterprise-client.com
+To: support@supportflow.internal
+Subject: CRITICAL: Production API completely down for all European users
+Date: Tue, 13 Oct 2026 14:15:00 +0000
+Content-Type: text/plain; charset=utf-8
+
+URGENT:
+
+Our entire production workload has been returning HTTP 500 errors for the past 25 minutes. No users in the EU region can access the dashboard or authenticate. 
+
+All operations are completely blocked. We need immediate incident response and escalation to engineering on-call!
