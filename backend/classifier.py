@@ -1,4 +1,5 @@
 import json
+import re
 
 from langchain_ollama import OllamaLLM
 
@@ -9,6 +10,14 @@ SLA_MAP = {
     "SEV3": "3 days",
     "SEV4": "4 days",
     "SEV5": "5 days",
+}
+
+VALID_CATEGORIES = {
+    "password_reset",
+    "billing_question",
+    "shipping_delay",
+    "login_issues",
+    "other",
 }
 
 
@@ -26,17 +35,43 @@ def create_classifier():
         format="json",
         temperature=0,
     )
-
     return model
+
+
+def _extract_json(raw_text: str) -> dict:
+    """Robustly extracts JSON even if enclosed in markdown code fences or conversational text."""
+    raw_text = raw_text.strip()
+
+    # Direct parse attempt
+    try:
+        return json.loads(raw_text)
+    except json.JSONDecodeError:
+        pass
+
+    # Extract JSON inside markdown code blocks ```json ... ```
+    match = re.search(r"```(?:json)?\s*(\{.*?\})\s*```", raw_text, re.DOTALL)
+    if match:
+        try:
+            return json.loads(match.group(1))
+        except json.JSONDecodeError:
+            pass
+
+    # Extract first outer curly braces { ... }
+    match = re.search(r"(\{.*\})", raw_text, re.DOTALL)
+    if match:
+        try:
+            return json.loads(match.group(1))
+        except json.JSONDecodeError:
+            pass
+
+    raise ValueError(f"Could not parse valid JSON from classifier output: {raw_text[:200]}")
 
 
 def classify_ticket(model, ticket_text, context):
     prompt = f"""
 You are a customer support ticket classifier.
 
-Analyse the customer ticket using the provided
-knowledge base context.
-
+Analyse the customer ticket using the provided knowledge base context.
 All reasoning must strictly follow the knowledge base.
 
 Knowledge Base:
@@ -49,12 +84,11 @@ Available categories:
 - password_reset
 - billing_question
 - shipping_delay
-- login issues
+- login_issues
 - other
 
 
 Determine:
-
 1. category
 2. urgency
 3. confidence
@@ -64,22 +98,18 @@ Determine:
 CATEGORY RULES
 
 The category must be exactly one of:
-
 - password_reset
 - billing_question
 - shipping_delay
-- login issues
+- login_issues
 - other
 
 Choose the category that best represents the customer's actual issue.
-
-Do not invent a category outside this list.
 
 
 SEVERITY RULES
 
 Severity must be exactly one of:
-
 - SEV1
 - SEV2
 - SEV3
@@ -88,141 +118,20 @@ Severity must be exactly one of:
 
 Classify severity based on the impact, scope, and urgency of the issue.
 
-
-### SEV1 — Critical
-
-A critical incident causing complete service failure, widespread outage,
-severe security breach, data loss, or another issue that prevents most
-or all users from using a critical service.
-
-Examples:
-
-- Entire application or production system is unavailable
-- Widespread login failure affecting all or most users
-- Confirmed major security breach
-- Critical production data loss or corruption
-- Core business operations are completely blocked
-
-
-### SEV2 — High
-
-A serious incident causing major disruption to important functionality
-or affecting multiple users, but the overall service is not completely
-unavailable.
-
-Examples:
-
-- Major feature is unavailable for many users
-- Significant performance degradation affecting multiple users
-- Multiple users cannot log in
-- Important business operations are severely impacted
-- No reasonable workaround is available
-
-
-### SEV3 — Medium
-
-An issue causing moderate impact to one or more users. Important
-functionality may be impaired, but the system remains usable and a
-workaround may exist.
-
-Examples:
-
-- A user cannot access an important feature
-- Intermittent application errors
-- Login issue affecting an individual user after normal troubleshooting
-- Functionality is partially broken but a workaround exists
-- Issue impacts normal work but does not stop critical operations
-
-
-### SEV4 — Low
-
-A minor issue with limited impact that does not significantly prevent
-the user from completing their work.
-
-Examples:
-
-- Minor UI or display issue
-- Non-critical feature behaves incorrectly
-- Small inconvenience with an easy workaround
-- General technical assistance request
-- Issue has minimal business impact
-
-
-### SEV5 — Informational
-
-A request that does not represent a service failure or significant
-technical problem.
-
-Examples:
-
-- General question
-- How-to request
-- Documentation request
-- Feature information request
-- Cosmetic feedback with no functional impact
-
+### SEV1 — Critical: Complete service failure, widespread outage, major security breach.
+### SEV2 — High: Major disruption, multiple users impacted, no immediate workaround.
+### SEV3 — Medium: Standard functional bug or individual login issue after normal troubleshooting.
+### SEV4 — Low: Minor issue, cosmetic bug, general questions with easy workaround.
+### SEV5 — Informational: General inquiry, how-to, documentation or feature requests.
 
 URGENCY RULES
-
-Always return exactly one of:
-
-SEV1, SEV2, SEV3, SEV4, SEV5
-
-Do not return values such as:
-
-- low
-- medium
-- high
-- critical
-
-Do not increase or decrease severity based on whether the ticket
-can be automatically answered.
-
-Severity must represent only the impact, scope, and urgency of
-the customer's issue.
-
+Always return exactly one of: SEV1, SEV2, SEV3, SEV4, SEV5.
 
 CONFIDENCE RULES
-
-Confidence must be an integer from 0 to 100.
-
-- 0 means completely uncertain
-- 100 means completely certain
-
-Confidence represents confidence in the classification of the ticket.
-
-Confidence must only represent confidence in the category and severity.
-
-Do not use confidence to indicate whether an automatic reply is safe.
-
-
-REASONING RULES
-
-The reason must briefly explain why the selected category and severity
-were chosen.
-
-The reason should focus only on classification.
-
-Do not determine whether the ticket should be automatically replied to.
-
-Do not determine whether the ticket should be escalated.
-
-Do not discuss whether a human needs to investigate the issue.
-
-Do not include routing decisions in the reason.
-
+Confidence must be an integer from 0 to 100 representing certainty in the category and severity.
 
 OUTPUT RULES
-
-Return ONLY valid JSON.
-
-Do not include Markdown.
-Do not include code fences.
-Do not include text before or after the JSON.
-Do not include additional fields.
-
-Return exactly this structure:
-
+Return ONLY valid JSON matching this exact structure:
 {{
     "category": "password_reset",
     "urgency": "SEV3",
@@ -232,16 +141,25 @@ Return exactly this structure:
 """
 
     response = model.invoke(prompt)
+    result = _extract_json(response)
 
-    result = json.loads(response)
+    # Normalize category (converts 'login issues' to 'login_issues')
+    raw_category = str(result.get("category", "other")).strip().lower().replace(" ", "_")
+    result["category"] = raw_category if raw_category in VALID_CATEGORIES else "other"
 
-    urgency = result.get("urgency")
-
+    # Normalize urgency
+    urgency = str(result.get("urgency", "SEV3")).strip().upper()
     if urgency not in SLA_MAP:
-        raise ValueError(
-            f"Invalid urgency returned by classifier: {urgency}"
-        )
+        urgency = "SEV3"
+    result["urgency"] = urgency
 
+    # Normalize confidence as an integer between 0 and 100
+    try:
+        result["confidence"] = max(0, min(100, int(result.get("confidence", 50))))
+    except (ValueError, TypeError):
+        result["confidence"] = 50
+
+    result["reason"] = str(result.get("reason", "No reason provided.")).strip()
     result["sla"] = SLA_MAP[urgency]
 
     return result

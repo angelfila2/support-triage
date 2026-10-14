@@ -1,4 +1,5 @@
 import json
+import re
 
 from langchain_ollama import OllamaLLM
 
@@ -17,11 +18,36 @@ def create_answerability_checker():
         format="json",
         temperature=0,
     )
-
     return model
 
 
-def check_answerability(model, ticket_text, context):
+def _extract_json(raw_text: str) -> dict:
+    """Robustly extracts JSON even if enclosed in markdown code fences or conversational text."""
+    raw_text = raw_text.strip()
+
+    try:
+        return json.loads(raw_text)
+    except json.JSONDecodeError:
+        pass
+
+    match = re.search(r"```(?:json)?\s*(\{.*?\})\s*```", raw_text, re.DOTALL)
+    if match:
+        try:
+            return json.loads(match.group(1))
+        except json.JSONDecodeError:
+            pass
+
+    match = re.search(r"(\{.*\})", raw_text, re.DOTALL)
+    if match:
+        try:
+            return json.loads(match.group(1))
+        except json.JSONDecodeError:
+            pass
+
+    raise ValueError(f"Could not parse valid JSON from answerability output: {raw_text[:200]}")
+
+
+def check_answerability(model, ticket_text, context) -> bool:
     prompt = f"""
 You are an answerability checker for a customer support system.
 
@@ -41,76 +67,24 @@ Set can_auto_reply to true when the knowledge base contains a
 documented answer, troubleshooting procedure, or next step that
 reasonably applies to the customer's issue.
 
-The customer's issue does NOT need to contain every technical detail.
-
-The root cause does NOT need to be known.
-
-If the customer's issue matches a troubleshooting procedure in the
-knowledge base and the customer has not indicated that they already
-completed that procedure, can_auto_reply should be true.
-
-For example:
-
-If the customer reports that they cannot log in and the knowledge base
-contains login troubleshooting steps, can_auto_reply should be true.
-
-The automatic response can provide those documented troubleshooting
-steps.
-
-
 Set can_auto_reply to false when:
-
 - the knowledge base contains no relevant answer or procedure
-- the customer's issue does not reasonably match the provided
-  knowledge base
-- the customer has already tried the troubleshooting procedure
-  provided by the knowledge base and the issue still persists
-- the knowledge base explicitly says the issue should be escalated
-  after the steps the customer has already attempted
-- resolving the issue requires human investigation
-- resolving the issue requires access to accounts, systems, logs,
-  databases, orders, payments, or other unavailable information
+- the customer has already tried the troubleshooting procedure provided
+- resolving the issue requires human investigation or access to accounts/databases
 - answering would require unsupported assumptions
 
-
-ESCALATION RULE
-
-If the knowledge base provides troubleshooting steps followed by an
-instruction to escalate if those steps fail:
-
-- return can_auto_reply=true if the customer has NOT yet indicated
-  that they completed those troubleshooting steps
-
-- return can_auto_reply=false if the customer states that they already
-  completed those troubleshooting steps and the problem still persists
-
-
-IMPORTANT
-
-Do not treat the existence of a possible future escalation as a reason
-to immediately set can_auto_reply=false.
-
-If the knowledge base provides troubleshooting steps that should be
-attempted before escalation, those steps are a valid automatic reply.
-
-
 OUTPUT RULES
-
-Return ONLY valid JSON.
-
-Do not include Markdown.
-Do not include code fences.
-Do not include text before or after the JSON.
-
-Return exactly:
-
+Return ONLY valid JSON matching exactly:
 {{
     "can_auto_reply": true
 }}
 """
 
-    response = model.invoke(prompt)
-
-    result = json.loads(response)
-
-    return result["can_auto_reply"]
+    try:
+        response = model.invoke(prompt)
+        result = _extract_json(response)
+        return bool(result.get("can_auto_reply", False))
+    except Exception as error:
+        # Safe failure mode: If checking answerability fails, safely escalate to human review
+        print(f"Warning: Answerability check failed to parse ({error}). Defaulting to ESCALATE.")
+        return False

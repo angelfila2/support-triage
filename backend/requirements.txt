@@ -9,4 +9,6 @@ langchain-community
 langchain-ollama
 langchain-chroma
 chromadb
-python-dotenv
+python-dotenv
+
+pytest
