@@ -1,11 +1,7 @@
 from langchain_ollama import OllamaLLM
 
 
-try:
-    from config import OLLAMA_MODEL, OLLAMA_BASE_URL
-except ImportError:
-    OLLAMA_MODEL = "llama3.2"
-    OLLAMA_BASE_URL = "http://localhost:11434"
+from backend.config import OLLAMA_MODEL, OLLAMA_BASE_URL
 
 
 def create_responder():

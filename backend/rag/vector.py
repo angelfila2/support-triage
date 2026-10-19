@@ -1,10 +1,7 @@
 from langchain_ollama import OllamaEmbeddings
 from langchain_chroma import Chroma
 
-try:
-    from config import OLLAMA_BASE_URL
-except ImportError:
-    OLLAMA_BASE_URL = "http://localhost:11434"
+from backend.config import OLLAMA_BASE_URL
 
 
 def create_vector_store(documents):

@@ -3,13 +3,14 @@
 from contextlib import asynccontextmanager
 import sqlite3
 
+from backend.agent.classifier import VALID_CATEGORIES
 from fastapi import FastAPI, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
-from config import CORS_ORIGINS, OUTPUT_DIR, TICKETS_FILE
-from storage import db_connection, init_database, utc_now
-from triage import triage_ticket
+from backend.config import CORS_ORIGINS, OUTPUT_DIR, TICKETS_FILE
+from backend.storage import db_connection, init_database, utc_now
+from backend.agent.triage import triage_ticket
 
 DB_PATH = OUTPUT_DIR / "supportflow.db"
 SLA_MAP = {
@@ -49,14 +50,13 @@ app.add_middleware(
 
 
 class TicketRequest(BaseModel):
-    subject: str
-    body: str
+    model_config = ConfigDict(
+        strict=True,
+        str_strip_whitespace=True,
+    )
 
-
-class TicketReviewRequest(BaseModel):
-    analysis_correct: bool
-    corrected_category: str | None = None
-    review_notes: str | None = None
+    subject: str = Field(min_length=1, max_length=500)
+    body: str = Field(min_length=1, max_length=20000)
 
 
 class TicketResponseRequest(BaseModel):
@@ -70,9 +70,43 @@ def format_ticket(row: sqlite3.Row) -> dict:
     data["id"] = str(data["id"])
     data["is_suspicious"] = bool(data["is_suspicious"])
     data["responded"] = bool(data["responded"])
+
     if data["analysis_correct"] is not None:
         data["analysis_correct"] = bool(data["analysis_correct"])
+
     return data
+
+
+class TicketReviewRequest(BaseModel):
+    model_config = ConfigDict(
+        strict=True,
+        str_strip_whitespace=True,
+    )
+
+    analysis_correct: bool
+    corrected_category: str | None = None
+    review_notes: str | None = Field(default=None, max_length=5000)
+
+    @model_validator(mode="after")
+    def validate_review(self):
+        if (
+            self.corrected_category is not None
+            and self.corrected_category not in VALID_CATEGORIES
+        ):
+            raise ValueError(
+                "corrected_category must be one of: "
+                + ", ".join(sorted(VALID_CATEGORIES))
+            )
+
+        if not self.analysis_correct and self.corrected_category is None:
+            raise ValueError(
+                "corrected_category is required when analysis is marked incorrect."
+            )
+
+        if self.analysis_correct:
+            self.corrected_category = None
+
+        return self
 
 
 @app.get("/")

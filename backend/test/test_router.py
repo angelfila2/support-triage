@@ -1,15 +1,4 @@
-import sys
-from pathlib import Path
-
-# Ensure backend directory is in sys.path regardless of execution directory
-BACKEND_DIR = Path(__file__).resolve().parent.parent
-if str(BACKEND_DIR) not in sys.path:
-    sys.path.insert(0, str(BACKEND_DIR))
-
-try:
-    from router import route_ticket
-except ImportError:
-    from backend.router import route_ticket
+from backend.agent.router import route_ticket
 
 
 def test_sev1_outage_always_escalates():

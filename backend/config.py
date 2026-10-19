@@ -36,20 +36,21 @@ except ImportError:
     _load_env_file(REPO_ROOT / ".env")
 
 # Directory and File Paths
-OUTPUT_DIR = Path(os.getenv("OUTPUT_DIR", BASE_DIR / "output")).resolve()
-TICKETS_FILE = Path(
-    os.getenv("TICKETS_FILE", OUTPUT_DIR / "tickets_processed.csv")
-).resolve()
-KNOWLEDGE_BASE_DIR = Path(
-    os.getenv("KNOWLEDGE_BASE_DIR", BASE_DIR / "knowledgebase")
-).resolve()
-DATA_DIR = Path(os.getenv("DATA_DIR", BASE_DIR / "data")).resolve()
-SAMPLE_TICKETS_FILE = Path(
-    os.getenv("SAMPLE_TICKETS_FILE", DATA_DIR / "sample_tickets.csv")
-).resolve()
-TRIAGE_RESULTS_FILE = Path(
-    os.getenv("TRIAGE_RESULTS_FILE", OUTPUT_DIR / "triage_results.csv")
-).resolve()
+def _resolve_path(name: str, default: Path) -> Path:
+    """Resolve relative overrides from backend/, independent of the launch folder."""
+    value = os.getenv(name)
+    path = Path(value).expanduser() if value else default
+    if not path.is_absolute():
+        path = BASE_DIR / path
+    return path.resolve()
+
+
+OUTPUT_DIR = _resolve_path("OUTPUT_DIR", BASE_DIR / "output")
+TICKETS_FILE = _resolve_path("TICKETS_FILE", OUTPUT_DIR / "tickets_processed.csv")
+KNOWLEDGE_BASE_DIR = _resolve_path("KNOWLEDGE_BASE_DIR", BASE_DIR / "knowledgebase")
+DATA_DIR = _resolve_path("DATA_DIR", BASE_DIR / "data")
+SAMPLE_TICKETS_FILE = _resolve_path("SAMPLE_TICKETS_FILE", DATA_DIR / "sample_tickets.csv")
+TRIAGE_RESULTS_FILE = _resolve_path("TRIAGE_RESULTS_FILE", OUTPUT_DIR / "triage_results.csv")
 
 # Ollama / Model Configuration
 OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "llama3.2")

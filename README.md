@@ -23,9 +23,8 @@ flowchart TD
     A[Incoming support ticket] --> B[Safety check]
     B -->|Suspicious| H[Escalate to human support]
     B -->|Passes| C[Retrieve knowledge base articles]
-    C --> D[Classify intent, severity and confidence]
-    D --> E[Check answerability]
-    E --> F{Routing policy}
+    C --> D[Combined intent, severity, confidence and answerability assessment]
+    D --> F{Routing policy}
     F -->|SEV1 or SEV2| H
     F -->|Low confidence or unanswerable| H
     F -->|Eligible for automated response| G[Generate grounded response]
@@ -38,16 +37,16 @@ flowchart TD
 
 | Component          | Responsibility                                                               |
 | ------------------ | ---------------------------------------------------------------------------- |
-| `safety.py`        | Detect potential prompt injection attempts.                                  |
-| `vector.py`        | Create the knowledge base vector store using Ollama embeddings and ChromaDB. |
-| `retriever.py`     | Retrieve knowledge base articles for a ticket.                               |
-| `classifier.py`    | Determine category, severity, confidence, and reasoning.                     |
-| `answerability.py` | Check whether the knowledge base supports an automated answer.               |
-| `router.py`        | Apply escalation and automatic reply policies.                               |
-| `responder.py`     | Generate a customer-facing response from the retrieved context.              |
-| `triage.py`        | Coordinate the shared ticket processing pipeline.                            |
+| `backend/agent/safety.py`        | Detect potential prompt injection attempts.                                  |
+| `backend/rag/vector.py`        | Create the knowledge base vector store using Ollama embeddings and ChromaDB. |
+| `backend/rag/retriever.py`     | Retrieve knowledge base articles for a ticket.                               |
+| `backend/agent/classifier.py`    | Determine category, severity, confidence, answerability, and reasoning.                     |
+| `backend/agent/answerability.py` | Legacy standalone checker; the shared pipeline now assesses answerability in the classifier.               |
+| `backend/agent/router.py`        | Apply escalation and automatic reply policies.                               |
+| `backend/agent/responder.py`     | Generate a customer-facing response from the retrieved context.              |
+| `backend/agent/triage.py`        | Coordinate the shared ticket processing pipeline.                            |
 | `api.py`           | Expose API endpoints and persist ticket records.                             |
-| `main.py`          | Run the shared pipeline against the sample dataset.                          |
+| `backend/evaluation/main.py`          | Run the shared pipeline against the sample dataset.                          |
 
 ## Categories
 
@@ -107,37 +106,38 @@ SLA values are recorded targets. Operational alerting and enforcement require in
 ```text
 support-triage/
 ├── README.md
-├── .gitignore
+├── pytest.ini
 ├── backend/
 │   ├── api.py
-│   ├── triage.py
-│   ├── classifier.py
-│   ├── answerability.py
-│   ├── responder.py
-│   ├── router.py
-│   ├── safety.py
-│   ├── vector.py
-│   ├── retriever.py
 │   ├── config.py
-│   ├── main.py
-│   ├── evaluate.py
-│   ├── resultwriter.py
+│   ├── storage.py
 │   ├── requirements.txt
-│   ├── knowledgebase/
-│   │   ├── billing.md
-│   │   ├── login_issues.md
-│   │   ├── password_reset.md
-│   │   └── shipping.md
-│   ├── data/
-│   │   └── sample_tickets.csv
-│   ├── output/
-│   │   ├── supportflow.db
-│   │   └── triage_results.csv
-│   ├── src/
+│   ├── agent/
+│   │   ├── __init__.py
+│   │   ├── triage.py
+│   │   ├── classifier.py
+│   │   ├── answerability.py
+│   │   ├── responder.py
+│   │   ├── router.py
+│   │   ├── safety.py
+│   │   └── structured_output.py
+│   ├── rag/
+│   │   ├── __init__.py
 │   │   ├── kb.py
+│   │   ├── vector.py
+│   │   └── retriever.py
+│   ├── evaluation/
+│   │   ├── __init__.py
+│   │   ├── main.py
+│   │   ├── evaluate.py
+│   │   ├── resultwriter.py
 │   │   └── ticketloader.py
+│   ├── knowledgebase/
 │   └── test/
-│       └── samplerouting.py
+│       ├── test_model_output.py
+│       ├── test_router.py
+│       ├── test_storage.py
+│       └── test_import_paths.py
 ├── frontend/
 │   ├── package.json
 │   ├── package-lock.json
@@ -151,10 +151,13 @@ support-triage/
 │       ├── App.css
 │       └── config.js
 └── test_emails/
-    ├── sample_password_reset.eml
-    ├── sample_sev1_outage.eml
-    └── sample_prompt_injection.eml
 ```
+
+Runtime databases and evaluation exports are created in `backend/output/`.
+The batch runner expects `backend/data/sample_tickets.csv` by default, but this
+GitHub version does not include that dataset. Restore it or set
+`SAMPLE_TICKETS_FILE` to a compatible CSV before running the batch command.
+
 
 The backend creates runtime output files when needed. Do not commit generated databases, result files, environment secrets, or bytecode.
 
@@ -176,7 +179,7 @@ SupportFlow uses two different models:
 | Purpose                                            | Model               | Used by                                          |
 | -------------------------------------------------- | ------------------- | ------------------------------------------------ |
 | Text generation, classification, and answerability | `llama3.2`          | Classifier, answerability checker, and responder |
-| Knowledge base and ticket embeddings               | `mxbai-embed-large` | `backend/vector.py`                              |
+| Knowledge base and ticket embeddings               | `mxbai-embed-large` | `backend/rag/vector.py`                              |
 
 Download both models:
 
@@ -251,10 +254,11 @@ Install dependencies:
 python -m pip install -r requirements.txt
 ```
 
-Start the backend:
+Return to the repository root and start the backend:
 
 ```bash
-uvicorn api:app --reload --host 127.0.0.1 --port 8000
+cd ..
+python -m uvicorn backend.api:app --reload --host 127.0.0.1 --port 8000
 ```
 
 Backend URLs:
@@ -336,9 +340,9 @@ Supported path overrides include:
 - `SAMPLE_TICKETS_FILE`
 - `TRIAGE_RESULTS_FILE`
 
-Use absolute paths when overriding directories to avoid ambiguity.
+Relative path overrides resolve from `backend/`, independent of the terminal directory. Absolute paths remain supported.
 
-The embedding model used by `backend/vector.py` is `mxbai-embed-large`. Keep the installed embedding model aligned with the model configured in that file.
+The embedding model used by `backend/rag/vector.py` is `mxbai-embed-large`. Keep the installed embedding model aligned with the model configured in that file.
 
 ## Using the dashboard
 
@@ -463,16 +467,15 @@ Records the response status, severity, SLA, timestamp, and agent notes.
 
 ## Batch processing
 
-With the backend virtual environment active and Ollama running:
+From the repository root, with the backend virtual environment active and Ollama running:
 
 ```bash
-cd backend
-python main.py
+python -m backend.evaluation.main
 ```
 
 The batch runner:
 
-1. Reads `data/sample_tickets.csv`.
+1. Reads `backend/data/sample_tickets.csv` (or `SAMPLE_TICKETS_FILE`).
 2. Calls the shared `triage_ticket()` pipeline for each ticket.
 3. Prints the results.
 4. Writes results to `output/triage_results.csv`.
@@ -483,10 +486,10 @@ The batch results file is regenerated on each run. It is separate from the SQLit
 
 ## Evaluation
 
-After generating batch results:
+From the repository root, after generating batch results:
 
 ```bash
-python evaluate.py
+python -m backend.evaluation.evaluate
 ```
 
 The current evaluator compares predicted categories against the dataset labels.
@@ -508,8 +511,8 @@ Use these checks to confirm that Problem 4 is resolved:
 3. Start the backend:
 
    ```bash
-   cd backend
-   uvicorn api:app --reload --host 127.0.0.1 --port 8000
+   # Run from the repository root.
+   python -m uvicorn backend.api:app --reload --host 127.0.0.1 --port 8000
    ```
 
 4. Open:
@@ -521,6 +524,18 @@ Use these checks to confirm that Problem 4 is resolved:
 5. Submit a password reset ticket through `POST /api/triage`.
 
 The request should complete without a missing embedding model or model-not-found error.
+
+## Running tests
+
+From the repository root, with the backend virtual environment active:
+
+```bash
+python -m pytest -q
+```
+
+The repository-level `pytest.ini` configures test discovery and package imports.
+The same configuration is found when running `python -m pytest test -q` from
+`backend/`. Model-output tests use mocked model calls; they do not require Ollama.
 
 ## Troubleshooting
 
@@ -586,21 +601,19 @@ Response times depend on hardware, model loading, and ticket length.
 Generate it first:
 
 ```bash
-cd backend
-python main.py
+python -m backend.evaluation.main
 ```
 
 Then run:
 
 ```bash
-python evaluate.py
+python -m backend.evaluation.evaluate
 ```
 
 ## Limitations and planned improvements
 
 - Separate intent and routing evaluation labels.
 - Report precision, recall, and macro F1.
-- Combine classification and answerability into one structured model call.
 - Add manual subject and body entry to the dashboard.
 - Persist the vector store and filter retrieval by relevance.
 - Strengthen prompt injection handling.

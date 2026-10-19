@@ -3,14 +3,14 @@
 from functools import lru_cache
 from threading import Lock
 
-from classifier import classify_ticket, create_classifier, SLA_MAP
-from config import KNOWLEDGE_BASE_DIR
-from responder import create_responder, generate_response
-from retriever import create_retriever, retrieve_documents
-from router import route_ticket
-from safety import check_prompt_injection
-from src.kb import load_knowledge_base
-from vector import create_vector_store
+from backend.agent.classifier import classify_ticket, create_classifier, SLA_MAP
+from backend.config import KNOWLEDGE_BASE_DIR
+from backend.agent.responder import create_responder, generate_response
+from backend.rag.retriever import create_retriever, retrieve_documents
+from backend.agent.router import route_ticket
+from backend.agent.safety import check_prompt_injection
+from backend.rag.kb import load_knowledge_base
+from backend.rag.vector import create_vector_store
 
 
 _engine_lock = Lock()

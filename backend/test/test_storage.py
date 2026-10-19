@@ -1,16 +1,11 @@
 import csv
 import sqlite3
-import sys
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 import pytest
 
-BACKEND_DIR = Path(__file__).resolve().parents[1]
-if str(BACKEND_DIR) not in sys.path:
-    sys.path.insert(0, str(BACKEND_DIR))
-
-from storage import CSV_MIGRATION, MigrationError, db_connection, init_database
+from backend.storage import CSV_MIGRATION, MigrationError, db_connection, init_database
 
 
 def write_csv(path, rows):
@@ -161,7 +156,7 @@ def test_malformed_csv_is_rejected(tmp_path, content):
 def test_upgrade_keeps_existing_schema_data(tmp_path):
     db = tmp_path / "tickets.db"
     # Build the exact old schema by omitting only the new legacy_id column.
-    from storage import _create_schema
+    from backend.storage import _create_schema
     with db_connection(db, write=True) as connection:
         _create_schema(connection)
         connection.execute("DROP INDEX tickets_legacy_id")

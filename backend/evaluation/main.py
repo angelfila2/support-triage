@@ -1,16 +1,9 @@
-import os
 import sys
-from pathlib import Path
 
-# Ensure backend root is on sys.path
-BASE_DIR = Path(__file__).resolve().parent
-if str(BASE_DIR) not in sys.path:
-    sys.path.insert(0, str(BASE_DIR))
-
-from config import SAMPLE_TICKETS_FILE, TRIAGE_RESULTS_FILE
-from src.ticketloader import load_tickets
-from triage import triage_ticket
-from resultwriter import save_result
+from backend.config import SAMPLE_TICKETS_FILE, TRIAGE_RESULTS_FILE
+from backend.evaluation.ticketloader import load_tickets
+from backend.agent.triage import triage_ticket
+from backend.evaluation.resultwriter import save_result
 
 
 def main():

@@ -6,8 +6,8 @@ import logging
 from langchain_ollama import OllamaLLM
 from pydantic import BaseModel, ConfigDict, ValidationError
 
-from config import OLLAMA_BASE_URL, OLLAMA_MODEL
-from structured_output import extract_json
+from backend.config import OLLAMA_BASE_URL, OLLAMA_MODEL
+from backend.agent.structured_output import extract_json
 
 
 logger = logging.getLogger(__name__)

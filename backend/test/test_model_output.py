@@ -1,22 +1,15 @@
 import json
-import sys
-from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import Mock
 
 import pytest
 
 
-BACKEND_DIR = Path(__file__).resolve().parents[1]
-
-if str(BACKEND_DIR) not in sys.path:
-    sys.path.insert(0, str(BACKEND_DIR))
-
-import triage
-from answerability import check_answerability
-from classifier import classify_ticket
-from router import route_ticket
-from structured_output import extract_json
+from backend.agent import triage
+from backend.agent.answerability import check_answerability
+from backend.agent.classifier import classify_ticket
+from backend.agent.router import route_ticket
+from backend.agent.structured_output import extract_json
 
 
 VALID_CLASSIFICATION = {
