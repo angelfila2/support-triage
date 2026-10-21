@@ -35,15 +35,13 @@ venv.bak/
 
 # =========================================================
 # Environment Variables & Secrets
-# Keep .env.example tracked, ignore actual secrets
+# Local environment files and credentials stay untracked
 # =========================================================
 .env
 .env.local
+.env.*
 .env.*.local
 *.env
-!.env.example
-!backend/.env.example
-!frontend/.env.example
 
 # =========================================================
 # Runtime Output, Vector Stores & Databases

@@ -1,0 +1,251 @@
+{
+  "provenance": {
+    "model": "llama3.2",
+    "file_hashes": {
+      "billing.md": "7892b0e719f9aa5d9e834246b25d3143b211297a618d9a716f571e329fe05fea",
+      "login_issues.md": "5741725d16b93dc3c8afe51c9af2a5c31adacb511e3d9231689e2a6d4fa73623",
+      "password_reset.md": "13d44745a9e78e6d9a2475dea91c2283bb8737e09a4a4bde3b7366196ac2a0d2",
+      "shipping.md": "723441a870380a2bd4884b3e875c682e9bdeef78b97d3a77f313e161caef8d1d",
+      "classifier.py": "cd367fc6be952a5e660d0137e0e42a4e274120e0ea9b00365b32d18c758b1fd1",
+      "policy.py": "4afb0a089c37cd9b941f16ffd6ba7aead3d41825051c6490fc27b3822c576553",
+      "responder.py": "1ccd615040a5d3024ea0b593286901b79e8ef5d4fcae1073c834f09fa6dfc11e",
+      "vector.py": "ba59abe176db66c0181807e1bfb508dd2e140d684c02cebe5a616de8383e65ed"
+    },
+    "model_digests": [
+      {
+        "name": "mxbai-embed-large:latest",
+        "digest": "468836162de7f81e041c43663fedbbba921dcea9b9fefea135685a39b2d83dd8"
+      },
+      {
+        "name": "llama3.2:latest",
+        "digest": "a80c4f17acd55265feec403c7aef86be0c25983ab279d83f3bcd3abbcb5b8b72"
+      },
+      {
+        "name": "gemma4:26b",
+        "digest": "08ae7ec1744bd7f451c4a530afb39d2673ad9d07a8369b8a33a3613b41212a68"
+      }
+    ],
+    "note": "One-issue scope. Development cases were used in fixes. Held-out labels were frozen before this run; not a population accuracy estimate.",
+    "dataset_hashes": {
+      "retrieval_challenge.json": "d2f96c7e90b40fefcd2b6531febddd2088ddfa2547332b24d880e9634de8cf70",
+      "evaluation_extended.json": "830065020bf2723e08cf96608eee75d66ed62fe11bec53895e6ae940bc38298f"
+    }
+  },
+  "complete": true,
+  "heldout_runs": [
+    {
+      "repeat": 1,
+      "metrics": {
+        "category": {
+          "accuracy": 1.0,
+          "macro_precision": 1.0,
+          "macro_recall": 1.0,
+          "macro_f1": 1.0,
+          "per_class": {
+            "billing_question": {
+              "precision": 1.0,
+              "recall": 1.0,
+              "f1": 1.0,
+              "support": 6
+            },
+            "login_issues": {
+              "precision": 1.0,
+              "recall": 1.0,
+              "f1": 1.0,
+              "support": 5
+            },
+            "other": {
+              "precision": 1.0,
+              "recall": 1.0,
+              "f1": 1.0,
+              "support": 6
+            },
+            "password_reset": {
+              "precision": 1.0,
+              "recall": 1.0,
+              "f1": 1.0,
+              "support": 3
+            },
+            "shipping_delay": {
+              "precision": 1.0,
+              "recall": 1.0,
+              "f1": 1.0,
+              "support": 4
+            }
+          }
+        },
+        "decision": {
+          "accuracy": 1.0,
+          "macro_precision": 1.0,
+          "macro_recall": 1.0,
+          "macro_f1": 1.0,
+          "per_class": {
+            "AUTO_REPLY": {
+              "precision": 1.0,
+              "recall": 1.0,
+              "f1": 1.0,
+              "support": 9
+            },
+            "ESCALATE": {
+              "precision": 1.0,
+              "recall": 1.0,
+              "f1": 1.0,
+              "support": 15
+            }
+          }
+        },
+        "urgency": {
+          "accuracy": 1.0,
+          "macro_precision": 1.0,
+          "macro_recall": 1.0,
+          "macro_f1": 1.0,
+          "per_class": {
+            "SEV1": {
+              "precision": 1.0,
+              "recall": 1.0,
+              "f1": 1.0,
+              "support": 2
+            },
+            "SEV2": {
+              "precision": 1.0,
+              "recall": 1.0,
+              "f1": 1.0,
+              "support": 1
+            },
+            "SEV3": {
+              "precision": 1.0,
+              "recall": 1.0,
+              "f1": 1.0,
+              "support": 14
+            },
+            "SEV4": {
+              "precision": 1.0,
+              "recall": 1.0,
+              "f1": 1.0,
+              "support": 3
+            },
+            "SEV5": {
+              "precision": 1.0,
+              "recall": 1.0,
+              "f1": 1.0,
+              "support": 4
+            }
+          }
+        }
+      },
+      "critical_escalation_recall": 1.0,
+      "unsafe_auto_reply_decisions": 0,
+      "grounding_failures": 0,
+      "expected_fact_check_failures": 0,
+      "safety_flag_mismatches": [],
+      "auto_reply_count": 9
+    },
+    {
+      "repeat": 2,
+      "metrics": {
+        "category": {
+          "accuracy": 1.0,
+          "macro_precision": 1.0,
+          "macro_recall": 1.0,
+          "macro_f1": 1.0,
+          "per_class": {
+            "billing_question": {
+              "precision": 1.0,
+              "recall": 1.0,
+              "f1": 1.0,
+              "support": 6
+            },
+            "login_issues": {
+              "precision": 1.0,
+              "recall": 1.0,
+              "f1": 1.0,
+              "support": 5
+            },
+            "other": {
+              "precision": 1.0,
+              "recall": 1.0,
+              "f1": 1.0,
+              "support": 6
+            },
+            "password_reset": {
+              "precision": 1.0,
+              "recall": 1.0,
+              "f1": 1.0,
+              "support": 3
+            },
+            "shipping_delay": {
+              "precision": 1.0,
+              "recall": 1.0,
+              "f1": 1.0,
+              "support": 4
+            }
+          }
+        },
+        "decision": {
+          "accuracy": 1.0,
+          "macro_precision": 1.0,
+          "macro_recall": 1.0,
+          "macro_f1": 1.0,
+          "per_class": {
+            "AUTO_REPLY": {
+              "precision": 1.0,
+              "recall": 1.0,
+              "f1": 1.0,
+              "support": 9
+            },
+            "ESCALATE": {
+              "precision": 1.0,
+              "recall": 1.0,
+              "f1": 1.0,
+              "support": 15
+            }
+          }
+        },
+        "urgency": {
+          "accuracy": 1.0,
+          "macro_precision": 1.0,
+          "macro_recall": 1.0,
+          "macro_f1": 1.0,
+          "per_class": {
+            "SEV1": {
+              "precision": 1.0,
+              "recall": 1.0,
+              "f1": 1.0,
+              "support": 2
+            },
+            "SEV2": {
+              "precision": 1.0,
+              "recall": 1.0,
+              "f1": 1.0,
+              "support": 1
+            },
+            "SEV3": {
+              "precision": 1.0,
+              "recall": 1.0,
+              "f1": 1.0,
+              "support": 14
+            },
+            "SEV4": {
+              "precision": 1.0,
+              "recall": 1.0,
+              "f1": 1.0,
+              "support": 3
+            },
+            "SEV5": {
+              "precision": 1.0,
+              "recall": 1.0,
+              "f1": 1.0,
+              "support": 4
+            }
+          }
+        }
+      },
+      "critical_escalation_recall": 1.0,
+      "unsafe_auto_reply_decisions": 0,
+      "grounding_failures": 0,
+      "expected_fact_check_failures": 0,
+      "safety_flag_mismatches": [],
+      "auto_reply_count": 9
+    }
+  ]
+}

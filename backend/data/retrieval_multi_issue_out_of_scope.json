@@ -1,0 +1,34 @@
+[
+  {
+    "id": "multi-01",
+    "query": "My password reset link expired. Also, where can I download my subscription invoice?",
+    "expected_sources": [
+      "password_reset.md",
+      "billing.md"
+    ]
+  },
+  {
+    "id": "multi-02",
+    "query": "My delivery tracking has not changed for seven days, and I think I was charged twice.",
+    "expected_sources": [
+      "shipping.md",
+      "billing.md"
+    ]
+  },
+  {
+    "id": "multi-03",
+    "query": "How long does a password reset link last, and what browser troubleshooting can I try if login still fails?",
+    "expected_sources": [
+      "password_reset.md",
+      "login_issues.md"
+    ]
+  },
+  {
+    "id": "multi-04",
+    "query": "Where do I download my invoice and check my parcel's delivery status?",
+    "expected_sources": [
+      "billing.md",
+      "shipping.md"
+    ]
+  }
+]

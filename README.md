@@ -2,7 +2,7 @@
 
 SupportFlow classifies incoming support tickets, retrieves relevant knowledge base articles, checks whether an automated answer is appropriate, and escalates tickets that require human attention.
 
-The React dashboard supports email uploads, ticket history, human review, severity updates, and analytics.
+The React dashboard supports email uploads, manual ticket entry, ticket history, human review, severity updates, and analytics. The supported scope is one issue per ticket.
 
 ## Features
 
@@ -20,7 +20,8 @@ The React dashboard supports email uploads, ticket history, human review, severi
 
 ```mermaid
 flowchart TD
-    A[Incoming support ticket] --> B[Safety check]
+    A[Incoming support ticket] --> S[Save intake and commit]
+    S --> B[Safety check]
     B -->|Suspicious| H[Escalate to human support]
     B -->|Passes| C[Retrieve knowledge base articles]
     C --> D[Combined intent, severity, confidence and answerability assessment]
@@ -28,8 +29,9 @@ flowchart TD
     F -->|SEV1 or SEV2| H
     F -->|Low confidence or unanswerable| H
     F -->|Eligible for automated response| G[Generate grounded response]
-    H --> I[Store ticket in SQLite]
+    H --> I[Update saved ticket in SQLite]
     G --> I
+    S -->|Inference failure or deadline| E[Mark saved ticket failed]
     I --> J[Dashboard and human review]
 ```
 
@@ -45,7 +47,7 @@ flowchart TD
 | `backend/agent/router.py`        | Apply escalation and automatic reply policies.                               |
 | `backend/agent/responder.py`     | Generate a customer-facing response from the retrieved context.              |
 | `backend/agent/triage.py`        | Coordinate the shared ticket processing pipeline.                            |
-| `api.py`           | Expose API endpoints and persist ticket records.                             |
+| `backend/api.py`           | Expose API endpoints and persist ticket records.                             |
 | `backend/evaluation/main.py`          | Run the shared pipeline against the sample dataset.                          |
 
 ## Categories
@@ -142,7 +144,7 @@ support-triage/
 │   ├── package.json
 │   ├── package-lock.json
 │   ├── vite.config.js
-│   ├── .env.example
+│   ├── .env
 │   └── src/
 │       ├── components/
 │       ├── pages/
@@ -154,9 +156,9 @@ support-triage/
 ```
 
 Runtime databases and evaluation exports are created in `backend/output/`.
-The batch runner expects `backend/data/sample_tickets.csv` by default, but this
-GitHub version does not include that dataset. Restore it or set
-`SAMPLE_TICKETS_FILE` to a compatible CSV before running the batch command.
+The batch runner uses `backend/data/sample_tickets.csv`, containing 30 development
+cases with separate intent, severity and routing labels. See `backend/data/README.md`
+for source provenance, challenge cases, holdouts and the optional demo SQLite seed.
 
 
 The backend creates runtime output files when needed. Do not commit generated databases, result files, environment secrets, or bytecode.
@@ -254,6 +256,12 @@ Install dependencies:
 python -m pip install -r requirements.txt
 ```
 
+Create a local `backend/.env` before starting. Set `API_WRITE_TOKEN` to a random
+value of at least 32 characters; optionally set a distinct `API_READ_TOKEN`.
+Generate a value with `python -c "import secrets; print(secrets.token_urlsafe(32))"`.
+Environment files stay local and are ignored by Git. After opening the dashboard,
+enter the chosen token in its API access field.
+
 Return to the repository root and start the backend:
 
 ```bash
@@ -277,19 +285,7 @@ cd frontend
 npm install
 ```
 
-Optionally copy the frontend environment example.
-
-Windows PowerShell:
-
-```powershell
-Copy-Item .env.example .env
-```
-
-Linux/macOS:
-
-```bash
-cp .env.example .env
-```
+Create `frontend/.env` locally if you need a different API URL. Environment files are not committed.
 
 The frontend uses this API URL by default:
 
@@ -364,7 +360,9 @@ Example email files are available in `test_emails/`.
 GET /
 ```
 
-Returns basic application status.
+Returns basic application status. `GET /health/live` checks process liveness;
+`GET /health/ready` checks SQLite and the required Ollama models, returning 503
+until those dependencies are available.
 
 ### Triage a ticket
 
@@ -407,7 +405,21 @@ Model-generated fields can vary.
 GET /api/tickets
 ```
 
-Returns stored tickets, ordered newest first.
+Returns `{items, total, limit, offset, summary}`, ordered newest first. The default
+page contains 25 tickets; `limit` accepts 1–100 and `offset` starts at zero.
+Optional filters: `q`, `category`, `urgency`, `processing_status` and `review`
+(`pending`, `correct`, `incorrect`). Summary counts cover all matching records,
+not just the current page. For example:
+
+```http
+GET /api/tickets?processing_status=failed&limit=25&offset=0
+```
+
+`GET /api/analytics` returns aggregates across the full ticket history.
+`POST /api/tickets/{ticket_id}/retry` processes a pending or failed ticket under
+its existing ID; concurrent or completed-ticket retries return 409.
+`GET /api/tickets/{ticket_id}/attempts` returns bounded attempt history with frozen
+FAQ evidence, model metadata and code hashes. See [operations](docs/operations.md).
 
 ### Retrieve one ticket
 
@@ -480,7 +492,7 @@ The batch runner:
 3. Prints the results.
 4. Writes results to `output/triage_results.csv`.
 
-A successful run should process all 20 sample tickets without errors.
+A successful run should process all 30 sample tickets without errors.
 
 The batch results file is regenerated on each run. It is separate from the SQLite ticket history maintained by the API.
 
@@ -492,9 +504,10 @@ From the repository root, after generating batch results:
 python -m backend.evaluation.evaluate
 ```
 
-The current evaluator compares predicted categories against the dataset labels.
-
-The sample dataset contains historical labels that mix intent categories with escalation decisions. Treat the reported accuracy as a development diagnostic until intent and routing ground truth are separated.
+The evaluator reports separate intent, routing and severity precision, recall and
+macro F1, plus critical-incident escalation recall. Expected labels remain separate
+from model inputs. These small synthetic/adapted fixtures are development evidence,
+not estimates of production accuracy.
 
 ## Verifying the embedding setup
 
@@ -610,13 +623,25 @@ Then run:
 python -m backend.evaluation.evaluate
 ```
 
+## Policy, access controls and live evaluation
+
+See [P0/P1 fixes and validation](docs/P0-P1-fixes.md) for the policy boundary,
+repeated live-model evaluations, metrics and known limits. Automatic customer
+responses contain only verified complete FAQ quotations. Unsupported actions
+and human-only resolutions are escalated even if a model permits a reply.
+
+Ticket endpoints require bearer credentials by default. Configure distinct
+`API_WRITE_TOKEN` and optional `API_READ_TOKEN` values in
+`backend/.env`, then enter a credential in the dashboard header.
+For an explicitly trusted local demo only, set `AUTH_REQUIRED=false`.
+Never publish credentials in frontend environment variables.
+
+The database uses the fresh schema; previous database files are not migrated.
+Use a clean `OUTPUT_DIR` for a new installation rather than deleting history.
+
 ## Limitations and planned improvements
 
-- Separate intent and routing evaluation labels.
-- Report precision, recall, and macro F1.
-- Add manual subject and body entry to the dashboard.
-- Persist the vector store and filter retrieval by relevance.
-- Strengthen prompt injection handling.
+- Expand independently labelled evaluation and attack coverage.
 - Add Docker-based setup.
 - Integrate mailbox ingestion and escalation notifications.
 

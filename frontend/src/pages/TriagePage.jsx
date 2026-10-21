@@ -1,193 +1,80 @@
 import { useState } from "react";
-
 import EmailUploader from "../components/EmailUploader";
 import EmailPreview from "../components/EmailPreview";
 import TriageResult from "../components/TriageResult";
 import LoadingSpinner from "../components/LoadingSpinner";
-
 import { triageTicket } from "../services/triageApi";
 
-// =========================================================
-// TRIAGE PAGE
-// =========================================================
-
 function TriagePage({ onTriageComplete }) {
+  const [mode, setMode] = useState("upload");
   const [email, setEmail] = useState(null);
-
+  const [subject, setSubject] = useState("");
+  const [body, setBody] = useState("");
   const [result, setResult] = useState(null);
-
   const [loading, setLoading] = useState(false);
-
   const [error, setError] = useState("");
 
-  // =====================================================
-  // EMAIL LOADED
-  // =====================================================
-
-  const handleEmailLoaded = (loadedEmail) => {
-    console.log("TriagePage received email:", loadedEmail);
-
-    if (!loadedEmail) {
-      console.error("EmailUploader returned no email.");
-
-      return;
-    }
-
-    const emailData = {
-      from: loadedEmail.from || "Unknown Sender",
-      subject: loadedEmail.subject || "No Subject",
-
-      body: loadedEmail.body || "",
-    };
-
-    console.log("Saving email to React state:", emailData);
-
-    setEmail(emailData);
-
+  const reset = () => {
+    setEmail(null);
     setResult(null);
-
     setError("");
+    setLoading(false);
   };
 
-  // =====================================================
-  // ANALYSE EMAIL
-  // =====================================================
-
-  const analyzeEmail = async () => {
-    if (!email) {
-      return;
-    }
-
+  const analyze = async (ticket) => {
+    if (loading) return;
     setLoading(true);
-
     setError("");
-
-    setResult(null);
-
     try {
-      const data = await triageTicket(email.subject, email.body);
-
+      const data = await triageTicket(ticket.subject, ticket.body);
       setResult(data);
-
       onTriageComplete?.(data);
     } catch (err) {
-      console.error("Triage request failed:", err);
-
-      setError(err.message || "Unable to connect to the triage API.");
+      setError(err.message || "Unable to process this ticket.");
     } finally {
       setLoading(false);
     }
   };
 
-  // =====================================================
-  // RESET
-  // =====================================================
-
-  const reset = () => {
-    setEmail(null);
-
-    setResult(null);
-
-    setError("");
-
-    setLoading(false);
-  };
-
-  // =====================================================
-  // DEBUG
-  // =====================================================
-
-  console.log("TriagePage email state:", email);
-
-  // =====================================================
-  // RESULT
-  // =====================================================
-
-  if (result) {
-    return <TriageResult result={result} onReset={reset} />;
-  }
-
-  // =====================================================
-  // LOADING
-  // =====================================================
-
-  if (loading) {
-    return <LoadingSpinner />;
-  }
-
-  // =====================================================
-  // EMAIL PREVIEW
-  // =====================================================
-
-  if (email) {
-    return (
-      <>
-        <section className="hero">
-          <span className="hero-badge">EMAIL PREVIEW</span>
-
-          <h1>
-            Review before
-            <span> analysing.</span>
-          </h1>
-
-          <p>
-            Check the extracted email content before sending it through the
-            support ticket triage pipeline.
-          </p>
-        </section>
-
-        <EmailPreview
-          email={email}
-          onAnalyze={analyzeEmail}
-          onClear={reset}
-          loading={loading}
-        />
-
-        {error && (
-          <div className="api-error">
-            <strong>Analysis failed</strong>
-
-            <p>{error}</p>
-          </div>
-        )}
-      </>
-    );
-  }
-
-  // =====================================================
-  // UPLOAD SCREEN
-  // =====================================================
+  if (loading) return <LoadingSpinner />;
+  if (result) return <TriageResult result={result} onReset={reset} />;
 
   return (
     <>
       <section className="hero">
         <span className="hero-badge">AI-POWERED SUPPORT</span>
-
-        <h1>
-          Triage support tickets
-          <span> intelligently.</span>
-        </h1>
-
-        <p>
-          <div className="triage-steps">
-            <span>Step 1 : Download the email from their mailbox</span>
-            <br></br>
-            <span>Step 2 : Upload the email here</span>
-            <br></br>
-            <span>Step 3 : Let the AI pipeline do the rest!</span>
-          </div>
-        </p>
+        <h1>Triage support tickets<span> intelligently.</span></h1>
+        <p>Describe one issue per ticket. Upload an email or enter the problem below.</p>
       </section>
-
-      <EmailUploader onEmailLoaded={handleEmailLoaded} />
-
-      {error && (
-        <div className="api-error">
-          <strong>Upload failed</strong>
-
-          <p>{error}</p>
-        </div>
+      {email ? (
+        <EmailPreview email={email} onAnalyze={() => analyze(email)} onClear={reset} loading={loading} />
+      ) : (
+        <>
+          <div className="ticket-entry-modes" aria-label="Ticket entry mode">
+            <button type="button" aria-pressed={mode === "upload"} onClick={() => setMode("upload")}>Upload email</button>
+            <button type="button" aria-pressed={mode === "manual"} onClick={() => setMode("manual")}>Type ticket</button>
+          </div>
+          {mode === "upload" ? (
+            <EmailUploader onEmailLoaded={(ticket) => { setEmail(ticket); setError(""); }} />
+          ) : (
+            <form className="manual-ticket-form" onSubmit={(event) => {
+              event.preventDefault();
+              if (!subject.trim() || !body.trim()) {
+                setError("Subject and problem description are required.");
+                return;
+              }
+              analyze({ subject: subject.trim(), body: body.trim() });
+            }}>
+              <label htmlFor="ticket-subject">Subject</label>
+              <input id="ticket-subject" value={subject} onChange={(event) => setSubject(event.target.value)} maxLength={500} required />
+              <label htmlFor="ticket-body">Describe your issue</label>
+              <textarea id="ticket-body" value={body} onChange={(event) => setBody(event.target.value)} maxLength={20000} rows={8} required />
+              <button type="submit" disabled={loading}>Triage Ticket</button>
+            </form>
+          )}
+        </>
       )}
+      {error && <div className="api-error" role="alert"><strong>Unable to complete triage</strong><p>{error}</p></div>}
     </>
   );
 }

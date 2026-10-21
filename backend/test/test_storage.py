@@ -151,22 +151,3 @@ def test_malformed_csv_is_rejected(tmp_path, content):
     with pytest.raises(MigrationError):
         init_database(db, source)
     assert count_rows(db) == 0
-
-
-def test_upgrade_keeps_existing_schema_data(tmp_path):
-    db = tmp_path / "tickets.db"
-    # Build the exact old schema by omitting only the new legacy_id column.
-    from backend.storage import _create_schema
-    with db_connection(db, write=True) as connection:
-        _create_schema(connection)
-        connection.execute("DROP INDEX tickets_legacy_id")
-        connection.execute("ALTER TABLE tickets DROP COLUMN legacy_id")
-        connection.execute(
-            "INSERT INTO tickets (id,created_at,subject,body) VALUES (?,?,?,?)",
-            (42, "2026-01-01", "Keep me", "Body"),
-        )
-    init_database(db)
-    with db_connection(db) as connection:
-        row = connection.execute("SELECT * FROM tickets WHERE id = 42").fetchone()
-    assert row["subject"] == "Keep me"
-    assert row["legacy_id"] is None

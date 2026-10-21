@@ -1,3 +1,4 @@
+import { apiFetch } from "../services/apiFetch";
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { ArrowLeft, Check, Clock3, Pencil, ShieldAlert, X } from "lucide-react";
@@ -30,6 +31,8 @@ function TicketDetails() {
 
 function TicketDetailsContent({ ticketId }) {
   const [ticket, setTicket] = useState(null);
+  const [retrying, setRetrying] = useState(false);
+  const [attemptHistory, setAttemptHistory] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -50,7 +53,7 @@ function TicketDetailsContent({ ticketId }) {
 
     async function fetchTicket() {
       try {
-        const response = await fetch(
+        const response = await apiFetch(
           `${API_URL}/api/tickets/${encodeURIComponent(ticketId)}`,
           { signal: controller.signal },
         );
@@ -100,7 +103,7 @@ function TicketDetailsContent({ ticketId }) {
     setReviewError("");
 
     try {
-      const response = await fetch(
+      const response = await apiFetch(
         `${API_URL}/api/tickets/${encodeURIComponent(ticket.id)}/review`,
         {
           method: "PATCH",
@@ -142,7 +145,7 @@ function TicketDetailsContent({ ticketId }) {
     setUpdateError("");
 
     try {
-      const response = await fetch(
+      const response = await apiFetch(
         `${API_URL}/api/tickets/${encodeURIComponent(ticket.id)}/respond`,
         {
           method: "PATCH",
@@ -169,6 +172,26 @@ function TicketDetailsContent({ ticketId }) {
     } finally {
       setSavingUpdate(false);
     }
+  };
+
+  const retryTicket = async () => {
+    setRetrying(true); setError("");
+    try {
+      const response = await apiFetch(`${API_URL}/api/tickets/${encodeURIComponent(ticketId)}/retry`, { method: "POST" });
+      if (!response.ok) throw new Error(await getErrorMessage(response, "Retry failed"));
+      setTicket(normalizeTicket(await response.json())); setAttemptHistory(null);
+    } catch (err) {
+      try {
+        const response = await apiFetch(`${API_URL}/api/tickets/${encodeURIComponent(ticketId)}`);
+        if (response.ok) setTicket(normalizeTicket(await response.json()));
+      } catch { /* Preserve the saved ticket view when the network is unavailable. */ }
+      setUpdateError(err.message);
+    } finally { setRetrying(false); }
+  };
+  const loadAttempts = async () => {
+    const response = await apiFetch(`${API_URL}/api/tickets/${encodeURIComponent(ticketId)}/attempts?limit=20`);
+    if (response.ok) setAttemptHistory(await response.json());
+    else setUpdateError("Unable to load audit history.");
   };
 
   const openReviewModal = (mode) => {
@@ -221,6 +244,21 @@ function TicketDetailsContent({ ticketId }) {
         </div>
       </div>
 
+      <section className="detail-card">
+        <h2>Processing: {ticket.processing_status || "unknown"}</h2>
+        {ticket.processing_error && <p role="alert">{ticket.processing_error}</p>}
+        {updateError && <p role="alert">{updateError}</p>}
+        {["failed", "pending"].includes(ticket.processing_status) && <button type="button" onClick={retryTicket} disabled={retrying}>{retrying ? "Retrying..." : "Retry processing"}</button>}
+        <details><summary>Decision audit ({ticket.attempt_count || 0} attempts)</summary>
+          <p>Model: {ticket.provenance?.model || "Not recorded"}</p>
+          <p>Sources: {(ticket.retrieved_sources || []).join(", ") || "None"}</p>
+          <button type="button" onClick={loadAttempts}>Load attempt history</button>
+          {attemptHistory?.map((attempt) => <article key={attempt.id}><h3>{attempt.status} — {formatDate(attempt.started_at)}</h3>
+            <p>{attempt.error}</p><p>Model: {attempt.provenance.model || "Unavailable"}</p>
+            {attempt.evidence.map((item) => <details key={item.source}><summary>{item.source} — {item.sha256.slice(0, 12)}</summary><pre style={{ whiteSpace: "pre-wrap" }}>{item.content}</pre></details>)}
+          </article>)}
+        </details>
+      </section>
       <div className="details-grid">
         <div className="main-panel">
           <section className="detail-card">
@@ -554,9 +592,7 @@ function TicketDetailsContent({ ticketId }) {
 async function getErrorMessage(response, fallback) {
   const data = await response.json().catch(() => null);
 
-  return typeof data?.detail === "string"
-    ? data.detail
-    : `${fallback} (${response.status})`;
+  return typeof data?.detail === "string" ? data.detail : data?.detail?.message || `${fallback} (${response.status})`;
 }
 
 function normalizeTicket(record) {

@@ -68,6 +68,8 @@ def main():
             "response": triage_output.get("response", ""),
             "retrieved_sources": sources_str,
             "expected_category": expected_category,
+            "expected_urgency": ticket.get("expected_urgency", ""),
+            "expected_decision": ticket.get("expected_decision", ""),
         }
 
         save_result(output_file, record)

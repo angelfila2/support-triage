@@ -1,7 +1,8 @@
+import { apiFetch } from "./apiFetch";
 import { API_URL } from "../config";
 
 export async function triageTicket(subject, body) {
-  const response = await fetch(`${API_URL}/api/triage`, {
+  const response = await apiFetch(`${API_URL}/api/triage`, {
     method: "POST",
 
     headers: {
@@ -19,7 +20,14 @@ export async function triageTicket(subject, body) {
 
     try {
       const error = await response.json();
-      message = error.detail || message;
+      message =
+        typeof error.detail === "string"
+          ? error.detail
+          : Array.isArray(error.detail)
+            ? error.detail.map((item) => item.msg).join("; ")
+          : error.detail?.message
+            ? `${error.detail.message} Ticket ID: ${error.detail.ticket_id}`
+            : message;
     } catch {
       // Keep default error
     }

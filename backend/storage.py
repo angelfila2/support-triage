@@ -32,6 +32,7 @@ def db_connection(db_path, *, write=False):
     """Close every connection; commit writes only after successful completion."""
     connection = sqlite3.connect(str(db_path), timeout=30, isolation_level=None)
     connection.row_factory = sqlite3.Row
+    connection.execute("PRAGMA foreign_keys = ON")
     try:
         if write:
             # Acquire the write lock before checking migration state or rows.
@@ -68,18 +69,31 @@ def _create_schema(connection):
             responded INTEGER DEFAULT 0,
             response_datetime TEXT,
             response_notes TEXT,
-            legacy_id TEXT
+            legacy_id TEXT,
+            processing_status TEXT NOT NULL DEFAULT 'pending',
+            processing_error TEXT
         )
     """)
-    columns = {
-        row["name"] for row in connection.execute("PRAGMA table_info(tickets)")
-    }
-    if "legacy_id" not in columns:
-        connection.execute("ALTER TABLE tickets ADD COLUMN legacy_id TEXT")
     connection.execute("""
         CREATE UNIQUE INDEX IF NOT EXISTS tickets_legacy_id
         ON tickets (legacy_id)
     """)
+    connection.execute("""
+        CREATE TABLE IF NOT EXISTS ticket_attempts (
+            id TEXT PRIMARY KEY,
+            ticket_id INTEGER NOT NULL REFERENCES tickets(id),
+            started_at TEXT NOT NULL,
+            lease_until TEXT NOT NULL,
+            completed_at TEXT,
+            status TEXT NOT NULL CHECK(status IN ('processing','completed','failed')),
+            error TEXT,
+            provenance_json TEXT NOT NULL DEFAULT '{}',
+            evidence_json TEXT NOT NULL DEFAULT '[]',
+            result_json TEXT NOT NULL DEFAULT '{}'
+        )
+    """)
+    connection.execute("CREATE INDEX IF NOT EXISTS attempts_ticket ON ticket_attempts(ticket_id,started_at)")
+    connection.execute("CREATE UNIQUE INDEX IF NOT EXISTS active_ticket_attempt ON ticket_attempts(ticket_id) WHERE status='processing'")
     connection.execute("""
         CREATE TABLE IF NOT EXISTS app_migrations (
             name TEXT PRIMARY KEY,
@@ -109,6 +123,10 @@ def _parse_row(row):
     record["created_at"] = row.get("created_at") or utc_now()
     record["subject"] = row["subject"]
     record["body"] = row["body"]
+    # Historical rows with predictions are completed; input-only fixtures are pending.
+    record["processing_status"] = (
+        "completed" if record["decision"] in {"AUTO_REPLY", "ESCALATE"} else "pending"
+    )
 
     confidence = (row.get("confidence") or "").strip()
     record["confidence"] = int(confidence) if confidence else None
@@ -161,7 +179,7 @@ def _read_csv(csv_path):
 
 
 def init_database(db_path, csv_path=None):
-    """Create/upgrade the schema and import an empty database exactly once.
+    """Create the initial schema and import an empty database exactly once.
 
     Return the number imported. Existing populated databases are preserved.
     Exceptions propagate so startup cannot silently accept a partial import.

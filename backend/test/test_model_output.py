@@ -13,12 +13,47 @@ from backend.agent.structured_output import extract_json
 
 
 VALID_CLASSIFICATION = {
+    "troubleshooting_exhausted": False,
     "category": "password_reset",
     "urgency": "SEV4",
     "confidence": 95,
     "reason": "The knowledge base explains password reset links.",
     "can_auto_reply": True,
 }
+
+
+def test_exhausted_troubleshooting_overrides_model_reply_permission():
+    model = Mock()
+    model.invoke.return_value = json.dumps({
+        **VALID_CLASSIFICATION,
+        "troubleshooting_exhausted": True,
+        "can_auto_reply": True,
+    })
+    result = classify_ticket(model, "All documented steps failed.", "FAQ steps")
+    assert result["troubleshooting_exhausted"] is True
+    assert result["can_auto_reply"] is False
+    assert route_ticket(result, False) == "ESCALATE"
+
+
+@pytest.mark.parametrize("value", ["false", "true", 0, 1, None])
+def test_troubleshooting_flag_rejects_non_booleans(value):
+    model = Mock()
+    model.invoke.return_value = json.dumps({
+        **VALID_CLASSIFICATION, "troubleshooting_exhausted": value,
+    })
+    result = classify_ticket(model, "Ticket", "FAQ")
+    assert result["confidence"] == 0
+    assert result["can_auto_reply"] is False
+
+
+def test_missing_troubleshooting_flag_uses_safe_fallback():
+    payload = {key: value for key, value in VALID_CLASSIFICATION.items()
+               if key != "troubleshooting_exhausted"}
+    model = Mock()
+    model.invoke.return_value = json.dumps(payload)
+    result = classify_ticket(model, "Ticket", "FAQ")
+    assert result["confidence"] == 0
+    assert result["can_auto_reply"] is False
 
 
 @pytest.mark.parametrize(
@@ -180,7 +215,7 @@ def install_fake_engine(monkeypatch, assessment, documents=None):
     classifier.invoke.return_value = json.dumps(assessment)
 
     responder = Mock()
-    responder.invoke.return_value = "Please request a new reset link."
+    responder.invoke.return_value = json.dumps({"passage_ids": [0]})
 
     monkeypatch.setattr(
         triage,
@@ -226,7 +261,8 @@ def test_incident_uses_one_assessment_and_no_generation(
 
     result = triage.triage_ticket(
         "Service outage",
-        "The service is unavailable for all users.",
+        ("The service is unavailable for all users." if severity == "SEV1"
+         else "Multiple users in our company cannot sign in."),
     )
 
     assert result["decision"] == "ESCALATE"

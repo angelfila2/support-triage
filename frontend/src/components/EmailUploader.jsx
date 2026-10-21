@@ -28,11 +28,9 @@ function EmailUploader({ onEmailLoaded }) {
     try {
       const rawEmail = await file.text();
 
-      console.log("Loaded EML:", file.name);
 
       const email = parseEmail(rawEmail);
 
-      console.log("Parsed email:", email);
 
       if (!email.subject && !email.body) {
         throw new Error("No email content found.");

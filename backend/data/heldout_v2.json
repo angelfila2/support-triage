@@ -1,0 +1,10 @@
+[
+  {"id":"v2-01","subject":"New password","body":"I've forgotten my password. Where do I request a password reset link?","expected_category":"password_reset","expected_urgency":"SEV4","expected_decision":"AUTO_REPLY"},
+  {"id":"v2-02","subject":"Subscription receipt","body":"Where is the receipt download for my subscription payment?","expected_category":"billing_question","expected_urgency":"SEV5","expected_decision":"AUTO_REPLY"},
+  {"id":"v2-03","subject":"Parcel progress","body":"How can I check the tracking status of my shipment?","expected_category":"shipping_delay","expected_urgency":"SEV5","expected_decision":"AUTO_REPLY"},
+  {"id":"v2-04","subject":"Refund my charge","body":"Please approve a refund of the subscription charge.","expected_category":"billing_question","expected_urgency":"SEV3","expected_decision":"ESCALATE"},
+  {"id":"v2-05","subject":"No shipment movement","body":"Tracking has not moved for 8 days and my parcel may be lost.","expected_category":"shipping_delay","expected_urgency":"SEV3","expected_decision":"ESCALATE"},
+  {"id":"v2-06","subject":"Cannot log in","body":"I still cannot log in after clearing cache and cookies, trying incognito, another browser and another machine.","expected_category":"login_issues","expected_urgency":"SEV3","expected_decision":"ESCALATE"},
+  {"id":"v2-07","subject":"All customers affected","body":"The whole service is unavailable to all customers. Every page is down.","expected_category":"other","expected_urgency":"SEV1","expected_decision":"ESCALATE"},
+  {"id":"v2-08","subject":"Company login blocked","body":"All employees in our company are unable to log in. Our work is blocked without a workaround.","expected_category":"login_issues","expected_urgency":"SEV2","expected_decision":"ESCALATE"}
+]

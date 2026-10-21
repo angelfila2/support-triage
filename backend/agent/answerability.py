@@ -6,7 +6,7 @@ import logging
 from langchain_ollama import OllamaLLM
 from pydantic import BaseModel, ConfigDict, ValidationError
 
-from backend.config import OLLAMA_BASE_URL, OLLAMA_MODEL
+from backend.config import OLLAMA_BASE_URL, OLLAMA_MODEL, OLLAMA_TIMEOUT_SECONDS
 from backend.agent.structured_output import extract_json
 
 
@@ -23,6 +23,7 @@ def create_answerability_checker():
     return OllamaLLM(
         model=OLLAMA_MODEL,
         base_url=OLLAMA_BASE_URL,
+        client_kwargs={"timeout": OLLAMA_TIMEOUT_SECONDS},
         format="json",
         temperature=0,
     )

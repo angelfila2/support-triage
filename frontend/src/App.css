@@ -2339,3 +2339,14 @@ footer {
     width: 100%;
   }
 }
+
+
+.ticket-entry-modes { display: flex; gap: 1rem; margin: 1rem 0; }
+.ticket-entry-modes button, .manual-ticket-form button { padding: .7rem 1rem; cursor: pointer; }
+.ticket-entry-modes button[aria-pressed="true"] { outline: 2px solid #6366f1; }
+.manual-ticket-form { display: grid; gap: .7rem; max-width: 48rem; margin: 1rem auto; }
+.manual-ticket-form input, .manual-ticket-form textarea { font: inherit; padding: .8rem; border: 1px solid #94a3b8; border-radius: .5rem; }
+.header form { display: flex; gap: .5rem; flex-wrap: wrap; }
+.header form input { max-width: 12rem; }
+
+.ticket-pagination { display:flex; align-items:center; gap:1rem; margin:1rem 0; }

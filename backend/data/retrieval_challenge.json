@@ -1,0 +1,205 @@
+[
+  {
+    "id": "paraphrase-01",
+    "query": "The recovery URL in my email is too old to use. How do I get another?",
+    "expected_sources": [
+      "password_reset.md"
+    ],
+    "expected_can_auto_reply": true
+  },
+  {
+    "id": "paraphrase-02",
+    "query": "I need proof of payment for our accounts department. Where can I obtain it?",
+    "expected_sources": [
+      "billing.md"
+    ],
+    "expected_can_auto_reply": true
+  },
+  {
+    "id": "paraphrase-03",
+    "query": "The parcel hasn't moved according to the tracking page for a whole week.",
+    "expected_sources": [
+      "shipping.md"
+    ],
+    "expected_can_auto_reply": false
+  },
+  {
+    "id": "paraphrase-04",
+    "query": "Access works on my phone but fails in my desktop browser. What troubleshooting is available?",
+    "expected_sources": [
+      "login_issues.md"
+    ],
+    "expected_can_auto_reply": true
+  },
+  {
+    "id": "unsupported-technical-01",
+    "query": "How do I rotate the signing certificate for our SAML identity provider?",
+    "expected_sources": [],
+    "expected_can_auto_reply": false
+  },
+  {
+    "id": "unsupported-technical-02",
+    "query": "What API endpoint creates a subscription invoice programmatically?",
+    "expected_sources": [],
+    "expected_can_auto_reply": false
+  },
+  {
+    "id": "unsupported-technical-03",
+    "query": "What webhook signature algorithm does your shipping integration use?",
+    "expected_sources": [],
+    "expected_can_auto_reply": false
+  },
+  {
+    "id": "unsupported-technical-04",
+    "query": "How do I change the expiration policy of your password reset tokens in server configuration?",
+    "expected_sources": [],
+    "expected_can_auto_reply": false
+  },
+  {
+    "id": "single-01",
+    "query": "I forgot my password and need a reset email. How do I request one?",
+    "expected_sources": [
+      "password_reset.md"
+    ],
+    "expected_can_auto_reply": true
+  },
+  {
+    "id": "single-02",
+    "query": "Does a password reset link expire after thirty minutes?",
+    "expected_sources": [
+      "password_reset.md"
+    ],
+    "expected_can_auto_reply": true
+  },
+  {
+    "id": "single-03",
+    "query": "I want a refund for my subscription. Please approve it.",
+    "expected_sources": [
+      "billing.md"
+    ],
+    "expected_can_auto_reply": false
+  },
+  {
+    "id": "single-04",
+    "query": "My subscription payment appears twice on my statement. Can you investigate?",
+    "expected_sources": [
+      "billing.md"
+    ],
+    "expected_can_auto_reply": false
+  },
+  {
+    "id": "single-05",
+    "query": "I still cannot sign in after clearing cookies, using incognito, trying another browser and another machine.",
+    "expected_sources": [
+      "login_issues.md"
+    ],
+    "expected_can_auto_reply": false,
+    "expected_troubleshooting_exhausted": true
+  },
+  {
+    "id": "single-06",
+    "query": "My parcel is lost. Please arrange an investigation.",
+    "expected_sources": [
+      "shipping.md"
+    ],
+    "expected_can_auto_reply": false
+  },
+  {
+    "id": "single-07",
+    "query": "My package is delayed but its tracking page updated this morning. What should I do?",
+    "expected_sources": [
+      "shipping.md"
+    ],
+    "expected_can_auto_reply": true
+  },
+  {
+    "id": "single-08",
+    "query": "The entire service is down for all customers and all pages are inaccessible.",
+    "expected_sources": [],
+    "expected_can_auto_reply": false
+  },
+  {
+    "id": "single-09",
+    "query": "All employees in our company cannot sign in; our work is blocked and there is no workaround.",
+    "expected_sources": [
+      "login_issues.md"
+    ],
+    "expected_can_auto_reply": false
+  },
+  {
+    "id": "single-10",
+    "query": "I cannot remember my account secret. How do I recover access using the password recovery option?",
+    "expected_sources": [
+      "password_reset.md"
+    ],
+    "expected_can_auto_reply": true
+  },
+  {
+    "id": "single-11",
+    "query": "I am not asking for a refund. I only need to download my invoice.",
+    "expected_sources": [
+      "billing.md"
+    ],
+    "expected_can_auto_reply": true
+  },
+  {
+    "id": "single-12",
+    "query": "Please add fingerprint authentication to your product.",
+    "expected_sources": [],
+    "expected_can_auto_reply": false
+  },
+  {
+    "id": "exhausted-01",
+    "query": "Clearing cookies, a private browsing window, another browser and a second computer made no difference. I still cannot sign in.",
+    "expected_sources": [
+      "login_issues.md"
+    ],
+    "expected_can_auto_reply": false,
+    "expected_troubleshooting_exhausted": true
+  },
+  {
+    "id": "exhausted-02",
+    "query": "I completed every login troubleshooting step in your FAQ, including another browser, clearing cache and cookies, incognito and another device. Access still fails.",
+    "expected_sources": [
+      "login_issues.md"
+    ],
+    "expected_can_auto_reply": false,
+    "expected_troubleshooting_exhausted": true
+  },
+  {
+    "id": "exhausted-03",
+    "query": "Your support guide did not fix my login. I tested another machine and browser, erased cache and cookies, and used incognito, but the issue persists.",
+    "expected_sources": [
+      "login_issues.md"
+    ],
+    "expected_can_auto_reply": false,
+    "expected_troubleshooting_exhausted": true
+  },
+  {
+    "id": "partial-01",
+    "query": "I cannot sign in. I cleared cookies but have not tried another browser, private browsing or another computer. What can I try next?",
+    "expected_sources": [
+      "login_issues.md"
+    ],
+    "expected_can_auto_reply": true,
+    "expected_troubleshooting_exhausted": false
+  },
+  {
+    "id": "partial-02",
+    "query": "I cannot sign in on this browser. I have not tried any troubleshooting yet. What steps do you recommend?",
+    "expected_sources": [
+      "login_issues.md"
+    ],
+    "expected_can_auto_reply": true,
+    "expected_troubleshooting_exhausted": false
+  },
+  {
+    "id": "partial-03",
+    "query": "I tried incognito and still cannot sign in. I have not cleared cookies or tried another browser or machine. What other documented steps remain?",
+    "expected_sources": [
+      "login_issues.md"
+    ],
+    "expected_can_auto_reply": true,
+    "expected_troubleshooting_exhausted": false
+  }
+]

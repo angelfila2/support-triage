@@ -1,3 +1,4 @@
+import { apiFetch } from "../services/apiFetch";
 import {
   Activity,
   Bot,
@@ -8,7 +9,7 @@ import { useEffect, useState } from "react";
 import { API_URL } from "../config";
 
 function AnalyticsPage() {
-  const [tickets, setTickets] = useState([]);
+  const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -17,7 +18,7 @@ function AnalyticsPage() {
 
     async function fetchTickets() {
       try {
-        const response = await fetch(`${API_URL}/api/tickets`, {
+        const response = await apiFetch(`${API_URL}/api/analytics`, {
           signal: controller.signal,
         });
 
@@ -27,21 +28,8 @@ function AnalyticsPage() {
 
         const data = await response.json();
 
-        if (
-          !Array.isArray(data) ||
-          data.some(
-            (ticket) =>
-              ticket === null ||
-              typeof ticket !== "object" ||
-              Array.isArray(ticket),
-          )
-        ) {
-          throw new Error("The API returned an invalid ticket list.");
-        }
-
-        if (!controller.signal.aborted) {
-          setTickets(data);
-        }
+        if (!data || !Array.isArray(data.recent)) throw new Error("Invalid analytics data.");
+        if (!controller.signal.aborted) setStats(data);
       } catch (err) {
         if (!controller.signal.aborted) {
           setError(err.message || "Unable to load analytics.");
@@ -92,34 +80,12 @@ function AnalyticsPage() {
     );
   }
 
-  const total = tickets.length;
-
-  const autoReplies = tickets.filter(
-    (ticket) => ticket.decision === "AUTO_REPLY",
-  ).length;
-
-  const escalations = tickets.filter(
-    (ticket) => ticket.decision === "ESCALATE",
-  ).length;
-
-  const averageConfidence =
-    total === 0
-      ? 0
-      : Math.round(
-          tickets.reduce(
-            (sum, ticket) => sum + (Number(ticket.confidence) || 0),
-            0,
-          ) / total,
-        );
-
-  const categoryCounts = tickets.reduce((counts, ticket) => {
-    const category = ticket.category || "unknown";
-    counts[category] = (counts[category] || 0) + 1;
-    return counts;
-  }, Object.create(null));
-
-  // GET /api/tickets already returns newest tickets first.
-  const recentTickets = tickets.slice(0, 10);
+  const total = stats.total;
+  const autoReplies = stats.auto_replies;
+  const escalations = stats.escalations;
+  const averageConfidence = Math.round(stats.average_confidence);
+  const categoryCounts = stats.categories;
+  const recentTickets = stats.recent;
 
   return (
     <div className="analytics-page">

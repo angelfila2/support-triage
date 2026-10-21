@@ -1,0 +1,92 @@
+[
+  {
+    "id": "password-01",
+    "query": "I forgot my password. How can I reset it?",
+    "expected_sources": ["password_reset.md"]
+  },
+  {
+    "id": "password-02",
+    "query": "My password reset link expired. What should I do?",
+    "expected_sources": ["password_reset.md"]
+  },
+  {
+    "id": "password-03",
+    "query": "How many minutes does a password reset link remain valid?",
+    "expected_sources": ["password_reset.md"]
+  },
+  {
+    "id": "billing-01",
+    "query": "Where can I download an invoice for my subscription?",
+    "expected_sources": ["billing.md"]
+  },
+  {
+    "id": "billing-02",
+    "query": "I think you charged me twice. What should happen next?",
+    "expected_sources": ["billing.md"]
+  },
+  {
+    "id": "billing-03",
+    "query": "Can you approve a refund for my subscription?",
+    "expected_sources": ["billing.md"]
+  },
+  {
+    "id": "shipping-01",
+    "query": "How do I check where my delivery is?",
+    "expected_sources": ["shipping.md"]
+  },
+  {
+    "id": "shipping-02",
+    "query": "My parcel tracking has not changed for seven days.",
+    "expected_sources": ["shipping.md"]
+  },
+  {
+    "id": "shipping-03",
+    "query": "My delivery is late, but tracking is still updating.",
+    "expected_sources": ["shipping.md"]
+  },
+  {
+    "id": "login-01",
+    "query": "I cannot sign in using this browser. What should I try?",
+    "expected_sources": ["login_issues.md"]
+  },
+  {
+    "id": "login-02",
+    "query": "Login still fails after clearing cookies and trying incognito.",
+    "expected_sources": ["login_issues.md"]
+  },
+  {
+    "id": "login-03",
+    "query": "I tried another browser and another computer but still cannot log in.",
+    "expected_sources": ["login_issues.md"]
+  },
+  {
+    "id": "unsupported-01",
+    "query": "Who plays Iron Man in the movies?",
+    "expected_sources": []
+  },
+  {
+    "id": "unsupported-02",
+    "query": "How do I add extra time to a HackerRank assessment?",
+    "expected_sources": []
+  },
+  {
+    "id": "unsupported-03",
+    "query": "How do I delete a private conversation in Claude?",
+    "expected_sources": []
+  },
+  {
+    "id": "unsupported-04",
+    "query": "Where can I report a stolen Visa card?",
+    "expected_sources": []
+  },
+  {
+    "id": "unsupported-05",
+    "query": "Can you recommend a recipe for vegetable soup?",
+    "expected_sources": []
+  },
+  {
+    "id": "unsupported-06",
+    "query": "How do I configure Kubernetes autoscaling?",
+    "expected_sources": []
+  }
+]
