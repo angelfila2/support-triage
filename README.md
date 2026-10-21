@@ -239,8 +239,8 @@ python -m pip install -r requirements.txt
 Create a local `backend/.env` before starting. Set `API_WRITE_TOKEN` to a random
 value of at least 32 characters; optionally set a distinct `API_READ_TOKEN`.
 Generate a value with `python -c "import secrets; print(secrets.token_urlsafe(32))"`.
-Environment files stay local and are ignored by Git. After opening the dashboard,
-enter the chosen token in its API access field.
+Environment files stay local and are ignored by Git. The local frontend server
+reads the backend credential automatically; the dashboard needs no token entry.
 
 Return to the repository root and start the backend:
 
@@ -267,7 +267,7 @@ npm install
 
 Create `frontend/.env` locally if you need a different API URL. Environment files are not committed.
 
-The frontend uses this API URL by default:
+The local frontend server forwards requests to this backend URL by default:
 
 ```text
 http://127.0.0.1:8000
@@ -610,9 +610,10 @@ repeated live-model evaluations, metrics and known limits. Automatic customer
 responses contain only verified complete FAQ quotations. Unsupported actions
 and human-only resolutions are escalated even if a model permits a reply.
 
-Ticket endpoints require bearer credentials by default. Configure distinct
-`API_WRITE_TOKEN` and optional `API_READ_TOKEN` values in
-`backend/.env`, then enter a credential in the dashboard header.
+Ticket endpoints require bearer credentials by default. Configure `API_WRITE_TOKEN`
+and an optional distinct `API_READ_TOKEN` in `backend/.env`. For local development,
+the frontend server reads the write credential and forwards API requests automatically.
+No credential is stored in browser storage or included in frontend assets.
 For an explicitly trusted local demo only, set `AUTH_REQUIRED=false`.
 Never publish credentials in frontend environment variables.
 
@@ -630,3 +631,21 @@ Automated responses should be validated against representative support tickets b
 ## License
 
 See the repository's license file for applicable terms.
+
+
+## Automatic local backend connection
+
+Start the backend and run `npm run dev` in `frontend/`. The inbox connects without
+a login form, token copying or a Connect API button. Vite reads `backend/.env`
+on the server and adds authentication only when forwarding `/api` requests to
+the local backend. `/health` is forwarded too, so the header reports readiness.
+`npm run preview` supports the same local connection after a build.
+
+Restart both servers after changing backend credentials. `VITE_API_URL`, if set,
+is the server's upstream address; browser requests always stay on the app origin.
+The automatic proxy binds to loopback and rejects requests from unrelated origins.
+Direct API clients still need bearer credentials. Static hosting alone cannot read
+`.env`; remote deployments need their own authenticated server-side integration.
+
+Verify the local connection with `node --test test/backend-connection.test.mjs`
+from `frontend/`.

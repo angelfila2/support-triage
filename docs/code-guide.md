@@ -76,3 +76,10 @@ npm run lint
 To change a screen, start with its page and matching stylesheet. Avoid splitting
 every function into another file; extract something when it has a clear separate
 job or needs to be reused.
+
+
+Incident priority: `backend/agent/classifier.py` defines `IncidentAssessment` and
+extracts facts in the existing model call. `backend/agent/policy.py` contains
+`incident_policy()`, which assigns incident priority from those facts. The router
+still enforces human escalation for SEV1 and SEV2. Regression examples are in
+`backend/test/test_incident_assessment.py`.

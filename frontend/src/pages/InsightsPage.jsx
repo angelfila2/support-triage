@@ -1,3 +1,4 @@
+import BreakdownChart from "../components/BreakdownChart";
 import { apiFetch } from "../services/api";
 import {
   Activity,
@@ -124,31 +125,10 @@ function InsightsPage() {
             <h2>Categories</h2>
           </div>
 
-          {total === 0 ? (
-            <EmptyAnalytics />
-          ) : (
-            <div className="category-list">
-              {Object.entries(categoryCounts).map(([category, count]) => {
-                const percentage = Math.round((count / total) * 100);
-
-                return (
-                  <div className="category-row" key={category}>
-                    <div className="category-info">
-                      <span>{formatCategory(category)}</span>
-                      <strong>{count}</strong>
-                    </div>
-
-                    <div className="analytics-progress" aria-hidden="true">
-                      <div
-                        className="analytics-progress-fill"
-                        style={{ width: `${percentage}%` }}
-                      />
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
+          <BreakdownChart label="Categories" rows={[
+            ...Object.entries(categoryCounts).map(([category, count]) => ({ label: formatCategory(category), count })),
+            ...(total > stats.completed ? [{ label: "Not yet triaged", count: total - stats.completed }] : [])
+          ]} />
         </section>
 
         <section className="analytics-panel">
@@ -157,19 +137,11 @@ function InsightsPage() {
             <h2>Decision Breakdown</h2>
           </div>
 
-          {total === 0 ? (
-            <EmptyAnalytics />
-          ) : (
-            <div className="routing-stats">
-              <RoutingRow
-                label="Auto Reply"
-                value={autoReplies}
-                total={total}
-              />
-
-              <RoutingRow label="Escalated" value={escalations} total={total} />
-            </div>
-          )}
+          <BreakdownChart label="Routing decisions" rows={[
+            { label: "Auto reply", count: autoReplies },
+            { label: "Escalated", count: escalations },
+            { label: "Not yet triaged", count: Math.max(0, total - autoReplies - escalations) }
+          ]} />
         </section>
       </div>
 
@@ -199,7 +171,7 @@ function InsightsPage() {
                     <td>{formatCategory(ticket.category)}</td>
 
                     <td>
-                      <span className="table-urgency">
+                      <span className={`table-urgency ${ticket.urgency?.toLowerCase() || ""}`}>
                         {ticket.urgency || "Unknown"}
                       </span>
                     </td>
@@ -239,30 +211,6 @@ function AnalyticsCard({ title, value, icon }) {
       </div>
 
       <strong>{value}</strong>
-    </div>
-  );
-}
-
-function RoutingRow({ label, value, total }) {
-  const percentage = total === 0 ? 0 : Math.round((value / total) * 100);
-
-  return (
-    <div className="routing-row">
-      <div>
-        <span>{label}</span>
-        <strong>{percentage}%</strong>
-      </div>
-
-      <div className="analytics-progress" aria-hidden="true">
-        <div
-          className="analytics-progress-fill"
-          style={{ width: `${percentage}%` }}
-        />
-      </div>
-
-      <small>
-        {value} of {total} tickets
-      </small>
     </div>
   );
 }

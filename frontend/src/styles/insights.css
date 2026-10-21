@@ -11,7 +11,7 @@
   border: 1px solid var(--border);
   border-radius: 8px;
   padding: 22px;
-  background: white;
+  background: var(--surface);
 }
 
 .analytics-card-top {
@@ -19,17 +19,17 @@
   justify-content: space-between;
   align-items: center;
   gap: 8px;
-  font-size: 10px;
-  color: #7e93b1;
+  font-size: 13px;
+  color: #495769;
 }
 
 .analytics-card-icon {
-  color: #95aed6;
+  color: #485368;
 }
 
 .analytics-card>strong {
   font-size: 29px;
-  color: #5b769d;
+  color: #405471;
   display: block;
   margin-top: 14px;
   font-weight: 550;
@@ -44,20 +44,20 @@
 }
 
 .analytics-panel {
-  background: white;
+  background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 8px;
   padding: 24px;
 }
 
 .panel-heading h2 {
-  color: #617b9e;
+  color: #40526b;
   font-size: 15px;
   margin-bottom: 26px;
 }
 
 .panel-heading .eyebrow {
-  font-size: 9px;
+  font-size: 13px;
 }
 
 .category-row {
@@ -67,8 +67,8 @@
 .category-info {
   display: flex;
   justify-content: space-between;
-  font-size: 11px;
-  color: #7490b3;
+  font-size: 13px;
+  color: #44546a;
   margin-bottom: 10px;
 }
 
@@ -84,14 +84,14 @@
   display: flex;
   justify-content: space-between;
   margin-bottom: 11px;
-  color: #7895bc;
-  font-size: 12px;
+  color: #415268;
+  font-size: 13px;
 }
 
 .routing-row small {
   display: block;
-  font-size: 10px;
-  color: #8199bb;
+  font-size: 13px;
+  color: #475367;
   margin-top: 8px;
 }
 
@@ -101,14 +101,14 @@
 }
 
 .analytics-table td {
-  font-size: 11px;
-  color: #7b96bb;
+  font-size: 13px;
+  color: #435367;
   border-bottom: 1px solid #f0f3f8;
 }
 
 .empty-analytics {
   padding: 35px;
-  font-size: 12px;
+  font-size: 13px;
 }
 
 .empty-analytics p {
@@ -116,5 +116,20 @@
 }
 
 .empty-analytics span {
-  font-size: 10px;
+  font-size: 13px;
 }
+
+.chart-toggle { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 24px; }
+.chart-toggle button { color: var(--text-secondary); font-size: 13px; }
+.chart-toggle button[aria-pressed="true"] { background: #dfe8fd; border-color: #3157b7; color: #193b91; }
+.pie-chart { width: min(220px, 100%); aspect-ratio: 1; border-radius: 50%; margin: 0 auto 26px; border: 2px solid var(--surface); }
+.chart-legend { list-style: none; margin: 0; padding: 0; }
+.chart-legend li { margin-top: 20px; }
+.chart-label { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; color: var(--text); font-size: 14px; }
+.chart-label > span { display: flex; align-items: center; gap: 9px; }
+.chart-label i { width: 11px; height: 11px; border-radius: 3px; flex-shrink: 0; }
+.chart-label strong { white-space: nowrap; }
+.chart-label small { color: var(--text-secondary); font-size: 13px; font-weight: 400; }
+.chart-bar-track { height: 12px; background: #dbe3ed; border-radius: 4px; overflow: hidden; margin-top: 10px; }
+.chart-bar-track > div { height: 100%; border-radius: inherit; }
+.chart-empty { color: var(--text-secondary); padding: 25px 0; }

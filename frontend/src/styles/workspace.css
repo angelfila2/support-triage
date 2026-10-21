@@ -3,16 +3,16 @@
 :root {
   font-family: "Segoe UI",Inter,-apple-system,BlinkMacSystemFont,sans-serif;
   color: #253047;
-  background: #f7f8fb;
+  background: #e6ebf2;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
-  --bg: #f7f8fb;
-  --surface: #fff;
+  --bg: #e6ebf2;
+  --surface: #f8fafc;
   --surface-soft: #f8fafc;
-  --border: #e5eaf1;
-  --text: #253047;
-  --text-secondary: #67758a;
-  --text-muted: #778398;
+  --border: #c7d1df;
+  --text: #172033;
+  --text-secondary: #334155;
+  --text-muted: #475569;
   --accent: #4569dc;
   --green-950: #233655;
   --green-700: #4569dc;
@@ -34,7 +34,7 @@ body,
 body {
   background: var(--bg);
   color: var(--text);
-  font-size: 13px;
+  font-size: 14px;
 }
 
 button,
@@ -57,8 +57,8 @@ button,
   gap: 7px;
   min-height: 35px;
   padding: 8px 13px;
-  color: #526077;
-  background: white;
+  color: #485468;
+  background: var(--surface);
   border: 1px solid #dce3ed;
   border-radius: 6px;
   font-weight: 550;
@@ -101,17 +101,17 @@ button:disabled {
 }
 
 .success-button {
-  color: #267354;
+  color: #1e5e44;
   border-color: #cce6d9;
   background: #f2fbf6;
 }
 
 .danger-button {
-  color: #a14b4b;
+  color: #843d3d;
 }
 
 .secondary-button {
-  background: white;
+  background: var(--surface);
 }
 
 input,
@@ -119,7 +119,7 @@ select,
 textarea {
   width: 100%;
   color: var(--text);
-  background: white;
+  background: var(--surface);
   border: 1px solid #dce3ed;
   border-radius: 6px;
   padding: 10px 12px;
@@ -135,7 +135,7 @@ select:focus {
 
 input::placeholder,
 textarea::placeholder {
-  color: #8390a4;
+  color: #4d5460;
 }
 
 textarea {
@@ -144,7 +144,7 @@ textarea {
 }
 
 label {
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
 }
 
@@ -186,8 +186,8 @@ hr {
 
 .eyebrow {
   display: block;
-  color: #728198;
-  font-size: 10px;
+  color: #48515f;
+  font-size: 13px;
   font-weight: 650;
   letter-spacing: 1.6px;
   margin-bottom: 10px;
@@ -207,7 +207,7 @@ hr {
 
 .muted {
   color: var(--text-muted);
-  font-size: 11px;
+  font-size: 13px;
 }
 
 /* Navigation */
@@ -223,7 +223,7 @@ hr {
   position: fixed;
   inset: 0 auto 0 0;
   width: 224px;
-  background: #fff;
+  background: var(--surface);
   border-right: 1px solid var(--border);
   display: flex;
   flex-direction: column;
@@ -256,52 +256,12 @@ hr {
   color: var(--accent);
 }
 
-.workspace-switch {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  padding: 12px 9px;
-  border: 1px solid var(--border);
-  border-radius: 7px;
-  background: #fbfcfd;
-  margin: 8px 0 30px;
-}
-
-.workspace-avatar {
-  background: #edf0f5;
-  border: 1px solid #e0e5ed;
-  width: 29px;
-  height: 29px;
-  display: grid;
-  place-items: center;
-  border-radius: 5px;
-  font-weight: 650;
-  color: #5a6c85;
-}
-
-.workspace-switch strong {
-  display: block;
-  font-size: 11px;
-  font-weight: 600;
-}
-
-.workspace-switch small {
-  display: block;
-  font-size: 10px;
-  color: #718097;
-  margin-top: 3px;
-}
-
-.workspace-switch>svg {
-  color: #8390a2;
-  margin-left: auto;
-}
-
 .nav-caption {
+  margin-top: 24px;
   padding-left: 12px;
-  color: #7e899b;
+  color: #4e5661;
   letter-spacing: 1.5px;
-  font-size: 9px;
+  font-size: 13px;
   font-weight: 600;
   margin-bottom: 12px;
 }
@@ -318,9 +278,9 @@ hr {
   gap: 11px;
   padding: 12px;
   border-radius: 6px;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 550;
-  color: #69768a;
+  color: #4b5463;
 }
 
 .sidebar-button:hover {
@@ -328,7 +288,7 @@ hr {
 }
 
 .sidebar-button.active {
-  color: #4166d5;
+  color: #314ea5;
   background: #edf2ff;
 }
 
@@ -357,14 +317,14 @@ hr {
   display: flex;
   align-items: center;
   gap: 7px;
-  color: #526dba;
-  font-size: 11px;
+  color: #3e538f;
+  font-size: 13px;
   font-weight: 600;
 }
 
 .assistant-note p {
-  font-size: 11px;
-  color: #77869e;
+  font-size: 13px;
+  color: #4a5364;
   line-height: 1.8;
   margin: 9px 0 11px;
 }
@@ -373,9 +333,9 @@ hr {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 600;
-  color: #526dba;
+  color: #3e538f;
 }
 
 .workspace-footer {
@@ -385,19 +345,19 @@ hr {
   display: flex;
   align-items: center;
   gap: 10px;
-  color: #7e8a9c;
+  color: #4e5762;
 }
 
 .workspace-footer strong {
   display: block;
-  color: #667287;
-  font-size: 11px;
+  color: #495260;
+  font-size: 13px;
   font-weight: 550;
 }
 
 .workspace-footer small {
   display: block;
-  font-size: 10px;
+  font-size: 13px;
   margin-top: 4px;
 }
 
@@ -409,19 +369,19 @@ hr {
   align-items: center;
   gap: 16px;
   border-bottom: 1px solid var(--border);
-  background: #fff;
+  background: var(--surface);
 }
 
 .breadcrumbs {
   display: flex;
   align-items: center;
   gap: 12px;
-  color: #7f8b9d;
-  font-size: 11px;
+  color: #4a525d;
+  font-size: 13px;
 }
 
 .breadcrumbs strong {
-  color: #58667b;
+  color: #485365;
   font-weight: 550;
 }
 
@@ -433,80 +393,13 @@ hr {
 
 .header-actions .primary-button {
   min-height: 33px;
-  font-size: 11px;
+  font-size: 13px;
 }
 
 .header-divider {
   height: 20px;
   width: 1px;
   background: var(--border);
-}
-
-.access-menu {
-  position: relative;
-}
-
-.access-menu summary {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  list-style: none;
-  cursor: pointer;
-  color: #6f7d92;
-  font-size: 10px;
-  padding: 8px 0;
-}
-
-summary::-webkit-details-marker {
-  display: none;
-}
-
-.connection-dot {
-  display: inline-block;
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: #a4afc0;
-}
-
-.connection-dot.configured {
-  background: #54a987;
-}
-
-.access-popover {
-  position: absolute;
-  top: 39px;
-  right: 0;
-  width: 310px;
-  padding: 20px;
-  z-index: 80;
-  background: white;
-  border: 1px solid #dfe5ef;
-  border-radius: 9px;
-  box-shadow: 0 12px 40px #2438581c;
-}
-
-.access-popover>strong {
-  display: flex;
-  gap: 7px;
-  align-items: center;
-  font-size: 13px;
-}
-
-.access-popover p {
-  color: var(--text-secondary);
-  font-size: 11px;
-  margin: 12px 0;
-}
-
-.access-popover label {
-  display: block;
-  margin-bottom: 8px;
-}
-
-.access-popover button {
-  width: 100%;
-  margin-top: 12px;
 }
 
 .main-content {
@@ -520,8 +413,8 @@ summary::-webkit-details-marker {
 .app-shell>footer {
   display: flex;
   justify-content: space-between;
-  color: #7e8a9d;
-  font-size: 10px;
+  color: #49515d;
+  font-size: 13px;
   padding: 16px 34px;
   border-top: 1px solid #edf0f4;
   gap: 12px;

@@ -38,7 +38,7 @@ function TicketInboxPage() {
         const response = await apiFetch(`${API_URL}/api/tickets?${params}`, {
           signal: controller.signal
         });
-        if (!response.ok) throw new Error(`Unable to load tickets (${response.status}). Check your access credential.`);
+        if (!response.ok) throw new Error(`Unable to load tickets (${response.status}). Check that the backend is running, then restart both servers if you changed backend/.env.`);
         const data = await response.json();
         if (!Array.isArray(data.items)) throw new Error("Invalid ticket page.");
         if (!controller.signal.aborted) {
@@ -127,11 +127,11 @@ function TicketInboxPage() {
             <option value="">All reviews</option><option value="pending">Not reviewed</option><option value="correct">Approved</option><option value="incorrect">Corrected</option>
           </select>
         </div>
-        {error && <div className="api-error" role="alert"><strong>We couldn’t load your inbox</strong><p>{error}</p><span>Use “Connect API” in the header to configure access.</span></div>}
+        {error && <div className="api-error" role="alert"><strong>We couldn’t load your inbox</strong><p>{error}</p><span>Start the backend and frontend from this project folder.</span></div>}
         {loading && <div className="queue-loading" role="status"><span className="spinner" />Loading ticket inbox...</div>}
         {!loading && !error && tickets.length === 0 && <div className="tickets-empty"><span className="empty-icon"><Inbox size={28} /></span><h2>A little breathing room.</h2><p>{Object.values(filters).some(Boolean) ? "No tickets match these filters. Try a different search." : "Your inbox is ready. Create a ticket to see AI triage in action."}</p><Link to="/triage" className="button primary-button"><Plus size={15} /> Create a ticket</Link></div>}
         {!loading && !error && tickets.length > 0 && <div className="tickets-table-wrapper"><table className="tickets-table">
-          <thead><tr><th scope="col">Ticket / subject</th><th scope="col">Priority</th><th scope="col">Status</th><th scope="col">AI routing</th><th scope="col">Review</th><th scope="col">Created</th><th scope="col"><span className="sr-only">Open ticket</span></th></tr></thead>
+          <thead><tr><th scope="col">Ticket / subject</th><th scope="col">Priority</th><th scope="col">Status</th><th scope="col">AI routing</th><th scope="col">Review</th><th scope="col">Created</th><th scope="col">Deadline</th><th scope="col"><span className="sr-only">Open ticket</span></th></tr></thead>
           <tbody>{tickets.map(ticket => <tr key={ticket.id}>
             <td><div className="ticket-request"><div><span className="ticket-number">#{ticket.id}</span><span className="category-label">{formatCategory(ticket.category)}</span></div><Link to={`/tickets/${ticket.id}`} className="ticket-subject">{ticket.subject || "Untitled request"}</Link><span className="ticket-excerpt">{truncate(ticket.body, 75)}</span></div></td>
             <td><UrgencyBadge urgency={ticket.urgency} /><small className="sla-caption">{ticket.sla ? `${ticket.sla} target` : "Not assigned"}</small></td>
@@ -144,6 +144,7 @@ function TicketInboxPage() {
             <td>{ticket.decision ? <span className={`routing-label ${ticket.decision === "AUTO_REPLY" ? "auto" : "escalated"}`}>{ticket.decision === "AUTO_REPLY" ? <Sparkles size={13} /> : <CornerUpRight size={13} />}{ticket.decision === "AUTO_REPLY" ? "Auto reply" : "Escalated"}</span> : <span className="muted">Awaiting triage</span>}</td>
             <td><ReviewStatus value={ticket.analysis_correct} /></td>
             <td className="date-cell">{formatDate(ticket.created_at)}</td>
+            <td className="deadline-cell">{formatDeadline(ticket)}</td>
             <td><button type="button" className="ticket-open" aria-label={`Open ticket ${ticket.id}`} onClick={() => navigate(`/tickets/${ticket.id}`)}><ChevronRight size={16} /></button></td>
           </tr>)}</tbody>
         </table></div>}
@@ -221,3 +222,12 @@ function formatDate(value) {
   });
 }
 export default TicketInboxPage;
+
+function formatDeadline(ticket) {
+  const hours = { SEV1: 4, SEV2: 24, SEV3: 72, SEV4: 96, SEV5: 120 }[ticket.urgency];
+  const created = new Date(ticket.created_at);
+  if (!hours || Number.isNaN(created.getTime())) return "Not assigned";
+  return new Date(created.getTime() + hours * 3600000).toLocaleString(undefined, {
+    month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit"
+  });
+}

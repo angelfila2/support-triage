@@ -2,14 +2,14 @@
 
 .intake-grid {
   display: grid;
-  grid-template-columns: minmax(0,1fr) 290px;
+  grid-template-columns: minmax(0,2fr) minmax(280px,1fr);
   gap: 28px;
   align-items: start;
-  max-width: 1150px;
+  width: 100%;
 }
 
 .intake-card {
-  background: white;
+  background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 9px;
   overflow: hidden;
@@ -29,8 +29,8 @@
 }
 
 .intake-card-heading p {
-  font-size: 11px;
-  color: #7b8ca4;
+  font-size: 13px;
+  color: #485260;
   margin: 0;
 }
 
@@ -41,7 +41,7 @@
   height: 39px;
   border: 1px solid #e7ecf6;
   border-radius: 9px;
-  color: #7890c3;
+  color: #465474;
   background: #f6f8fd;
 }
 
@@ -53,15 +53,15 @@
 
 .ticket-entry-modes button {
   flex: 1;
-  font-size: 11px;
+  font-size: 13px;
   min-height: 38px;
-  color: #7a8da8;
+  color: #485363;
 }
 
 .ticket-entry-modes button[aria-pressed="true"] {
   background: #f1f5ff;
   border-color: #bfd0fa;
-  color: #5878d2;
+  color: #3a508e;
 }
 
 .manual-ticket-form {
@@ -71,18 +71,18 @@
 .manual-ticket-form label {
   display: block;
   margin: 0 0 9px;
-  font-size: 11px;
-  color: #66758a;
+  font-size: 13px;
+  color: #495363;
 }
 
 .manual-ticket-form input {
   margin-bottom: 23px;
-  font-size: 12px;
+  font-size: 13px;
   height: 42px;
 }
 
 .manual-ticket-form textarea {
-  font-size: 12px;
+  font-size: 13px;
   min-height: 200px;
 }
 
@@ -98,15 +98,15 @@
 }
 
 .intake-submit>span {
-  font-size: 10px;
-  color: #7f93b2;
+  font-size: 13px;
+  color: #4a5769;
   display: flex;
   align-items: center;
   gap: 5px;
 }
 
 .intake-submit button {
-  font-size: 11px;
+  font-size: 13px;
 }
 
 .intake-guide {
@@ -117,23 +117,23 @@
   display: flex;
   align-items: center;
   gap: 7px;
-  font-size: 9px;
+  font-size: 13px;
   font-weight: 600;
   letter-spacing: 1px;
-  color: #758cb3;
+  color: #44526a;
 }
 
 .intake-guide>h2 {
   font-size: 23px;
   line-height: 1.5;
-  color: #4b5b74;
+  color: #46556d;
   letter-spacing: -.6px;
   margin: 16px 0 5px;
 }
 
 .guide-intro {
-  color: #7c8da8;
-  font-size: 12px;
+  color: #495363;
+  font-size: 13px;
 }
 
 .intake-guide ol {
@@ -150,7 +150,7 @@
 }
 
 .intake-guide li>span {
-  color: #8da0c8;
+  color: #495368;
   width: 34px;
   height: 34px;
   border: 1px solid #e4eaf4;
@@ -162,15 +162,15 @@
 }
 
 .intake-guide li strong {
-  color: #61748f;
-  font-size: 12px;
+  color: #455366;
+  font-size: 13px;
   font-weight: 550;
 }
 
 .intake-guide li p {
   margin: 5px 0 0;
-  font-size: 11px;
-  color: #7d8ea8;
+  font-size: 13px;
+  color: #495363;
 }
 
 .guide-safety {
@@ -179,7 +179,7 @@
   border-top: 1px solid #e4e9f1;
   padding-top: 22px;
   margin-top: 18px;
-  color: #78958a;
+  color: #465851;
 }
 
 .guide-safety svg {
@@ -188,15 +188,15 @@
 }
 
 .guide-safety p {
-  font-size: 10px;
-  color: #7b8f85;
+  font-size: 13px;
+  color: #48534e;
   margin: 0;
 }
 
 .guide-safety strong {
   display: block;
   font-weight: 550;
-  color: #657f70;
+  color: #43554b;
   margin-bottom: 4px;
 }
 
@@ -228,27 +228,27 @@
   width: 57px;
   height: 57px;
   background: #eff3fc;
-  color: #8da2ce;
+  color: #49536c;
   border-radius: 15px;
   margin-bottom: 21px;
 }
 
 .drop-zone h2 {
   font-size: 16px;
-  color: #657793;
+  color: #48556a;
   margin-bottom: 8px;
 }
 
 .drop-zone p {
-  font-size: 11px;
-  color: #7d8fa9;
+  font-size: 13px;
+  color: #495364;
   max-width: 290px;
   margin-bottom: 23px;
 }
 
 .file-support {
-  font-size: 10px;
-  color: #8294ad;
+  font-size: 13px;
+  color: #48525f;
   margin-top: 13px;
 }
 
@@ -280,8 +280,8 @@
 .email-field label {
   display: block;
   margin-bottom: 8px;
-  color: #7388a5;
-  font-size: 10px;
+  color: #485568;
+  font-size: 13px;
 }
 
 .email-subject {
@@ -292,8 +292,8 @@
 .email-body {
   line-height: 1.85;
   white-space: pre-wrap;
-  color: #69788e;
-  font-size: 12px;
+  color: #4b5666;
+  font-size: 13px;
   background: #f8fafd;
   border: 1px solid #e8edf5;
   padding: 20px;

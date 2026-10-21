@@ -18,6 +18,11 @@ VALID_CLASSIFICATION = {
     "confidence": 95,
     "reason": "The knowledge base explains password reset links.",
     "can_auto_reply": True,
+    "incident": {
+        "impact_scope": "not_applicable", "service_availability": "not_applicable",
+        "incident_status": "not_incident", "workaround_available": "not_applicable",
+        "security_impact": "none", "evidence": [],
+    },
 }
 
 
@@ -209,6 +214,12 @@ def test_incident_uses_one_assessment_and_no_generation(
     assessment = {
         **VALID_CLASSIFICATION,
         "urgency": severity,
+        "incident": {
+            "impact_scope": "widespread" if severity == "SEV1" else "multiple_users",
+            "service_availability": "unavailable", "incident_status": "ongoing",
+            "workaround_available": "unknown", "security_impact": "none",
+            "evidence": ["unavailable for all users" if severity == "SEV1" else "Multiple users in our company cannot sign in"],
+        },
     }
 
     _, classifier, responder = install_fake_engine(

@@ -82,11 +82,28 @@ class TicketRequest(BaseModel):
     body: str = Field(min_length=1, max_length=20000)
 
 
+HelpdeskStatus = Literal["open", "responded_waiting_info", "responded_awaiting_confirmation", "responded_closed"]
+HELPDESK_STATUS_LABELS = {
+    "open": "Open",
+    "responded_waiting_info": "Responded (waiting for user info)",
+    "responded_awaiting_confirmation": "Responded (awaiting user confirmation)",
+    "responded_closed": "Responded (closed)",
+}
+
+
+class TicketStatusRequest(BaseModel):
+    model_config = ConfigDict(strict=True, extra="forbid", str_strip_whitespace=True)
+    helpdesk_status: HelpdeskStatus
+    response_notes: str = Field(min_length=1, max_length=5000)
+    urgency: Literal["SEV1", "SEV2", "SEV3", "SEV4", "SEV5"] | None = None
+
+
 class TicketResponseRequest(BaseModel):
     model_config = ConfigDict(strict=True, str_strip_whitespace=True)
     responded: bool
     urgency: Literal["SEV1", "SEV2", "SEV3", "SEV4", "SEV5"]
-    response_notes: str | None = Field(default=None, max_length=5000)
+    response_notes: str = Field(min_length=1, max_length=5000)
+    helpdesk_status: HelpdeskStatus | None = None
 
 
 def format_ticket(row: sqlite3.Row) -> dict:
@@ -275,6 +292,35 @@ def ticket_details(ticket_id):
         return data
 
 
+@app.get("/api/tickets/{ticket_id}/timeline", dependencies=[Depends(authorize)])
+def ticket_timeline(ticket_id: str):
+    with get_db() as connection:
+        ticket = connection.execute("SELECT * FROM tickets WHERE id=?", (ticket_id,)).fetchone()
+        if ticket is None:
+            raise HTTPException(404, "Ticket not found.")
+        events = [{"id": "created", "occurred_at": ticket["created_at"],
+                   "title": "Ticket created", "description": "Request received and saved."}]
+        for attempt in connection.execute("SELECT * FROM ticket_attempts WHERE ticket_id=? ORDER BY started_at,rowid", (ticket_id,)):
+            events.append({"id": f"{attempt['id']}-start", "occurred_at": attempt["started_at"],
+                           "title": "AI triage started", "description": "Ticket assessment began."})
+            if attempt["completed_at"]:
+                result = json.loads(attempt["result_json"])
+                events.append({"id": f"{attempt['id']}-end", "occurred_at": attempt["completed_at"],
+                               "title": "AI triage completed" if attempt["status"] == "completed" else "AI triage failed",
+                               "description": ("Escalated to a human." if result.get("decision") == "ESCALATE" else "Assessment saved.") if attempt["status"] == "completed" else (attempt["error"] or "Processing did not complete.")})
+        saved = [dict(row) for row in connection.execute(
+            "SELECT id,occurred_at,title,description FROM ticket_events WHERE ticket_id=? ORDER BY id", (ticket_id,))]
+        events.extend({**event, "id": f"event-{event['id']}"} for event in saved)
+        if ticket["response_datetime"] and not any(event["title"] in ("Response recorded", "Response updated") for event in saved):
+            events.append({"id": "legacy-response", "occurred_at": ticket["response_datetime"],
+                           "title": "Response recorded", "description": "Helpdesk response saved."})
+        events.sort(key=lambda event: event["occurred_at"])
+        if ticket["analysis_correct"] is not None and not any(event["title"].startswith("Review") for event in saved):
+            events.append({"id": "legacy-review", "occurred_at": None, "title": "Review recorded",
+                           "description": "Approved." if ticket["analysis_correct"] else "Classification corrected."})
+        return events
+
+
 @app.get("/api/tickets/{ticket_id}/attempts", dependencies=[Depends(authorize)])
 def attempts(ticket_id: str, limit: int = Query(default=20, ge=1, le=100)):
     with get_db() as connection:
@@ -309,25 +355,47 @@ def review_ticket(ticket_id: str, review: TicketReviewRequest):
         )
         if cursor.rowcount == 0:
             raise HTTPException(404, f"Ticket {ticket_id} was not found.")
+        connection.execute("INSERT INTO ticket_events(ticket_id,occurred_at,title,description) VALUES (?,?,?,?)",
+                           (ticket_id, utc_now(), "Review saved", "AI classification approved." if review.analysis_correct else f"Category corrected to {review.corrected_category.replace('_', ' ')}."))
     return ticket_details(ticket_id)
+
+
+def save_helpdesk_update(ticket_id, helpdesk_status, notes, urgency=None):
+    """Save the status, required note and activity entry in one transaction."""
+    with get_db(write=True) as connection:
+        previous = connection.execute("SELECT * FROM tickets WHERE id=?", (ticket_id,)).fetchone()
+        if previous is None:
+            raise HTTPException(404, "Ticket not found.")
+        current = helpdesk_status or (
+            previous["helpdesk_status"] if previous["helpdesk_status"] != "open"
+            else "responded_awaiting_confirmation"
+        )
+        marks_response = current != "open"
+        now = utc_now()
+        connection.execute("""UPDATE tickets SET helpdesk_status=?, response_notes=?, responded=?,
+                           response_datetime=?, urgency=?, sla=? WHERE id=?""",
+                           (current, notes, int(bool(previous["responded"]) or marks_response),
+                            previous["response_datetime"] or (now if marks_response else None),
+                            urgency or previous["urgency"], SLA_MAP[urgency] if urgency else previous["sla"], ticket_id))
+        if marks_response and not previous["responded"]:
+            connection.execute("INSERT INTO ticket_events(ticket_id,occurred_at,title,description) VALUES (?,?,?,?)",
+                               (ticket_id, now, "Response recorded", "Helpdesk marked its reply as sent."))
+        title = "Helpdesk status changed" if previous["helpdesk_status"] != current else "Helpdesk update"
+        description = f"{HELPDESK_STATUS_LABELS[previous['helpdesk_status']]} → {HELPDESK_STATUS_LABELS[current]}" if previous["helpdesk_status"] != current else HELPDESK_STATUS_LABELS[current]
+        if urgency and urgency != previous["urgency"]:
+            description += f"\nUrgency: {previous['urgency'] or 'Unassigned'} → {urgency}"
+        connection.execute("INSERT INTO ticket_events(ticket_id,occurred_at,title,description) VALUES (?,?,?,?)",
+                           (ticket_id, now, title, description + "\nNote: " + notes))
+    return ticket_details(ticket_id)
+
+
+@app.patch("/api/tickets/{ticket_id}/status", dependencies=[Depends(authorize)])
+def change_ticket_status(ticket_id: str, update: TicketStatusRequest):
+    return save_helpdesk_update(ticket_id, update.helpdesk_status, update.response_notes, update.urgency)
 
 
 @app.patch("/api/tickets/{ticket_id}/respond", dependencies=[Depends(authorize)])
 def respond_ticket(ticket_id: str, response: TicketResponseRequest):
-    if response.urgency not in SLA_MAP:
-        raise HTTPException(400, "Invalid urgency. Use SEV1, SEV2, SEV3, SEV4 or SEV5.")
-    with get_db(write=True) as connection:
-        cursor = connection.execute(
-            """UPDATE tickets
-               SET urgency = ?, sla = ?, responded = ?,
-                   response_datetime = ?, response_notes = ?
-               WHERE id = ?""",
-            (
-                response.urgency, SLA_MAP[response.urgency], int(response.responded),
-                utc_now() if response.responded else None,
-                response.response_notes or "", ticket_id,
-            ),
-        )
-        if cursor.rowcount == 0:
-            raise HTTPException(404, f"Ticket {ticket_id} was not found.")
-    return ticket_details(ticket_id)
+    # Compatibility endpoint uses the same required-note update path.
+    return save_helpdesk_update(ticket_id, response.helpdesk_status if response.responded else "open",
+                               response.response_notes, response.urgency)

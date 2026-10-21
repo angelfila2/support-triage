@@ -16,6 +16,9 @@ def configure_pipeline(monkeypatch, documents, severity="SEV4", answerable=True)
         "category": "password_reset", "urgency": severity,
         "confidence": 99, "reason": "Model assessment",
         "can_auto_reply": answerable, "sla": SLA_MAP[severity],
+        "incident": {"impact_scope": "widespread" if severity == "SEV1" else "multiple_users" if severity == "SEV2" else "individual", "service_availability": "unavailable" if severity in {"SEV1", "SEV2"} else "degraded",
+                     "incident_status": "ongoing", "workaround_available": "no",
+                     "security_impact": "none", "evidence": ["Reset issue"]},
     })
     responder = Mock(return_value="Request a new reset link.")
     monkeypatch.setattr(triage, "classify_ticket", classifier)

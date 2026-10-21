@@ -7,10 +7,10 @@
   border: 1px solid #f0dcd6;
   border-radius: 7px;
   background: #fffaf8;
-  color: #9d675a;
+  color: #71493f;
   padding: 18px 21px;
   margin: 20px 0;
-  font-size: 12px;
+  font-size: 13px;
 }
 
 .queue-panel>.api-error {
@@ -23,7 +23,7 @@
 
 .api-error>span {
   display: block;
-  font-size: 11px;
+  font-size: 13px;
   margin-top: 10px;
 }
 
@@ -46,8 +46,8 @@
   justify-content: center;
   min-height: 280px;
   gap: 18px;
-  color: #7a94b8;
-  font-size: 12px;
+  color: #435266;
+  font-size: 13px;
 }
 
 .loading-container {
@@ -60,7 +60,7 @@
 }
 
 .loading-container p {
-  font-size: 12px;
+  font-size: 13px;
 }
 
 .spinner {
@@ -100,7 +100,7 @@
   max-height: 90vh;
   overflow: auto;
   padding: 28px;
-  background: white;
+  background: var(--surface);
   border: 1px solid #e0e7f3;
   border-radius: 12px;
   box-shadow: 0 20px 80px #23365033;
@@ -108,7 +108,7 @@
 
 .modal-card h3 {
   font-size: 18px;
-  color: #607da5;
+  color: #3f536f;
   margin-bottom: 25px;
 }
 
@@ -118,8 +118,8 @@
 
 .form-group label {
   display: block;
-  color: #738dae;
-  font-size: 11px;
+  color: #435366;
+  font-size: 13px;
   margin-bottom: 9px;
 }
 
@@ -169,7 +169,7 @@
     height: 29px;
   }
   .ticket-summary-item>div>span {
-    font-size: 9px;
+    font-size: 13px;
   }
   .intake-grid {
     grid-template-columns: minmax(0,1fr) 240px;
@@ -202,7 +202,6 @@
     padding: 0;
   }
   .sidebar-logo>span:last-child,
-  .workspace-switch,
   .nav-caption,
   .sidebar-button span,
   .sidebar-bottom {
@@ -266,7 +265,7 @@
     padding: 16px;
   }
   .ticket-summary-item>div>span {
-    font-size: 10px;
+    font-size: 13px;
   }
   .queue-tabs {
     gap: 20px;
@@ -349,9 +348,6 @@
     flex-direction: column;
     gap: 5px;
   }
-  .access-popover {
-    right: -90px;
-  }
 }
 
 @media(max-width:500px) {
@@ -379,14 +375,11 @@
     gap: 10px;
   }
   .header-actions .primary-button {
-    font-size: 10px;
+    font-size: 13px;
     padding: 8px 9px;
   }
-  .access-menu summary>span:not(.connection-dot) {
-    display: none;
-  }
   .breadcrumbs {
-    font-size: 10px;
+    font-size: 13px;
   }
   .main-content {
     padding: 24px 14px 30px;
@@ -399,7 +392,7 @@
     align-items: start;
   }
   .tickets-heading p {
-    font-size: 11px;
+    font-size: 13px;
     max-width: 210px;
   }
   .tickets-heading>button {
@@ -421,7 +414,7 @@
     width: 14px;
   }
   .ticket-summary-item>div>span {
-    font-size: 9px;
+    font-size: 13px;
   }
   .ticket-summary-item strong {
     font-size: 23px;
@@ -431,7 +424,7 @@
     padding: 0 13px;
   }
   .queue-tabs button {
-    font-size: 10px;
+    font-size: 13px;
   }
   .ticket-toolbar {
     padding: 14px;
@@ -451,7 +444,7 @@
     flex-wrap: wrap;
   }
   .intake-submit>span {
-    font-size: 9px;
+    font-size: 13px;
   }
   .intake-submit button {
     margin-left: auto;
@@ -487,7 +480,7 @@
     padding: 17px;
   }
   .analytics-card-top {
-    font-size: 9px;
+    font-size: 13px;
   }
   .analytics-panel {
     padding: 20px;
@@ -497,10 +490,6 @@
   }
   .drop-zone {
     padding: 22px 16px;
-  }
-  .access-popover {
-    right: -100px;
-    width: 270px;
   }
   .email-preview {
     padding: 20px;
@@ -519,7 +508,7 @@
 /* Readable queue density without turning the workspace into a spreadsheet. */
 
 .tickets-table th {
-  font-size: 11px;
+  font-size: 13px;
 }
 
 .ticket-subject {
@@ -527,27 +516,27 @@
 }
 
 .ticket-excerpt {
-  font-size: 11px;
+  font-size: 13px;
 }
 
 .ticket-number,
 .category-label {
-  font-size: 10px;
+  font-size: 13px;
 }
 
 .urgency-badge,
 .routing-label,
 .process-badge,
 .review-status {
-  font-size: 11px;
+  font-size: 13px;
 }
 
 .sla-caption {
-  font-size: 10px;
+  font-size: 13px;
 }
 
 .ticket-summary-item>div>span {
-  font-size: 11px;
+  font-size: 13px;
 }
 
 .sidebar-button {
@@ -555,7 +544,7 @@
 }
 
 .queue-tabs button {
-  font-size: 12px;
+  font-size: 13px;
 }
 
 .tickets-table td {
@@ -595,3 +584,48 @@
 @media (max-width: 500px) {
   .logo-mark { width: 36px; height: 36px; }
 }
+
+
+/* Conversation text needs more space than compact navigation labels. */
+.ticket-body,
+.response-content pre,
+.generated-response {
+  color: var(--text);
+  font-size: 15px;
+  line-height: 1.75;
+}
+.detail-card h3,
+.message-heading h2 {
+  color: var(--text);
+  font-size: 15px;
+  font-weight: 650;
+}
+
+/* Priority colours are shared by the inbox, ticket assessment and results. */
+.sev1, .SEV1 { --priority-bg: #b91c1c; --priority-text: #fff; --priority-border: #991b1b; }
+.sev2, .SEV2 { --priority-bg: #c2410c; --priority-text: #fff; --priority-border: #9a3412; }
+.sev3, .SEV3 { --priority-bg: #fef3c7; --priority-text: #78350f; --priority-border: #d97706; }
+.sev4, .SEV4 { --priority-bg: #dbeafe; --priority-text: #1e40af; --priority-border: #7298df; }
+.sev5, .SEV5 { --priority-bg: #e2e8f0; --priority-text: #334155; --priority-border: #94a3b8; }
+.urgency-badge, .urgency-tag, .table-urgency, .metric-card > .urgency {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  border: 1px solid var(--priority-border, #94a3b8);
+  border-radius: 6px;
+  background: var(--priority-bg, #e2e8f0);
+  color: var(--priority-text, #334155);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.3;
+  white-space: nowrap;
+}
+.urgency-badge small {
+  color: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  padding-left: 8px;
+  border-left: 1px solid currentColor;
+}
+.urgency-badge i { width: 7px; height: 7px; flex-shrink: 0; }

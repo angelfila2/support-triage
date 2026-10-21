@@ -8,8 +8,8 @@
   display: inline-flex;
   gap: 7px;
   align-items: center;
-  color: #7388a8;
-  font-size: 11px;
+  color: #48556a;
+  font-size: 13px;
   margin-bottom: 22px;
 }
 
@@ -39,29 +39,29 @@
 .badge.resolved {
   display: inline-flex;
   align-items: center;
-  font-size: 10px;
+  font-size: 13px;
   font-weight: 550;
   border-radius: 5px;
   padding: 6px 10px;
   background: #f1f3f7;
   white-space: nowrap;
-  color: #71849f;
+  color: #475365;
 }
 
 .status-badge.auto_reply,
 .decision-badge.auto {
   background: #edf3ff;
-  color: #5776b7;
+  color: #3e5484;
 }
 
 .status-badge.escalate,
 .decision-badge.escalated {
   background: #faf3e9;
-  color: #947441;
+  color: #644e2b;
 }
 
 .badge.resolved {
-  color: #4f8164;
+  color: #385d48;
   background: #eef7f1;
 }
 
@@ -71,12 +71,12 @@
   flex-wrap: wrap;
   gap: 12px;
   margin-bottom: 19px;
-  font-size: 11px;
-  color: #6a8b7c;
+  font-size: 13px;
+  color: #42584e;
 }
 
 .processing-strip.completed>.process-badge {
-  color: #628775;
+  color: #415a4e;
   background: transparent;
   padding-left: 0;
 }
@@ -86,7 +86,7 @@
   border-radius: 7px;
   padding: 12px;
   background: #fffbf9;
-  color: #a66c61;
+  color: #704840;
 }
 
 .processing-strip p {
@@ -109,7 +109,7 @@
 }
 
 .detail-card {
-  background: white;
+  background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 8px;
   padding: 24px;
@@ -117,13 +117,13 @@
 
 .detail-card h3 {
   margin: 0 0 20px;
-  color: #64748b;
+  color: #485364;
 }
 
 .detail-card h3>svg {
   vertical-align: middle;
   margin-right: 6px;
-  color: #8fa5d5;
+  color: #49556f;
 }
 
 .message-heading {
@@ -137,7 +137,7 @@
   width: 36px;
   height: 36px;
   background: #f0f3f8;
-  color: #97a7c0;
+  color: #4e5664;
   border: 1px solid #e7ecf5;
   border-radius: 50%;
   display: grid;
@@ -145,30 +145,30 @@
 }
 
 .message-heading h2 {
-  font-size: 12px;
+  font-size: 13px;
   margin: 0 0 4px;
-  color: #61758f;
+  color: #455366;
 }
 
 .message-heading div>span {
-  font-size: 10px;
-  color: #8093af;
+  font-size: 13px;
+  color: #4b5767;
 }
 
 .message-heading>svg {
   margin-left: auto;
-  color: #9baec9;
+  color: #4a5361;
 }
 
 .meta-text {
-  font-size: 10px;
-  color: #7e91ac;
+  font-size: 13px;
+  color: #495566;
 }
 
 .ticket-body {
   white-space: pre-wrap;
-  font-size: 12px;
-  color: #60738e;
+  font-size: 13px;
+  color: #445266;
   line-height: 1.9;
 }
 
@@ -194,25 +194,25 @@
   display: flex;
   align-items: center;
   gap: 7px;
-  color: #6783ba;
-  font-size: 12px;
+  color: #3f5275;
+  font-size: 13px;
   font-weight: 550;
 }
 
 .reply-card-heading small {
-  color: #8096b9;
-  font-size: 9px;
+  color: #465366;
+  font-size: 13px;
 }
 
 .response-content pre,
 .generated-response {
   font: inherit;
   line-height: 1.9;
-  color: #657d9f;
+  color: #43536c;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
   margin: 0;
-  font-size: 12px;
+  font-size: 13px;
 }
 
 .card-header-actions {
@@ -233,28 +233,28 @@
 }
 
 .action-buttons button {
-  font-size: 10px;
+  font-size: 13px;
   padding: 7px 10px;
   min-height: 31px;
 }
 
 .review-summary {
-  color: #6f88a2;
-  font-size: 11px;
+  color: #455566;
+  font-size: 13px;
 }
 
 .review-badge {
   margin: 18px 0 12px;
-  color: #5d8b70;
-  font-size: 11px;
+  color: #3a5846;
+  font-size: 13px;
 }
 
 .review-badge.incorrect {
-  color: #ad7565;
+  color: #6d493e;
 }
 
 .edit-button {
-  font-size: 10px;
+  font-size: 13px;
   min-height: 30px;
 }
 
@@ -264,17 +264,17 @@
   align-items: center;
   gap: 15px;
   margin: 18px 0;
-  font-size: 11px;
+  font-size: 13px;
 }
 
 .info-row .label,
 .reason-section>.label {
-  color: #7e91ad;
-  font-size: 10px;
+  color: #495566;
+  font-size: 13px;
 }
 
 .info-row .value {
-  color: #657c9b;
+  color: #435368;
   display: flex;
   align-items: center;
   gap: 5px;
@@ -288,68 +288,24 @@
 }
 
 .reason-section p {
-  color: #7b91b0;
-  font-size: 11px;
+  color: #485568;
+  font-size: 13px;
   line-height: 1.85;
   margin: 10px 0 0;
 }
 
 .warning-row {
-  color: #ac7657;
+  color: #6d4936;
 }
 
-.audit-card {
-  font-size: 11px;
-  color: #7b91b1;
-}
-
-.audit-card h3 {
-  margin-bottom: 14px;
-}
-
-.audit-card details {
-  margin-top: 10px;
-}
-
-.audit-card summary {
-  cursor: pointer;
-  color: #738aaa;
-  line-height: 1.6;
-  overflow-wrap: anywhere;
-}
-
-.audit-card p {
-  font-size: 10px;
-  margin: 9px 0;
-}
-
-.audit-card button {
-  font-size: 10px;
-  padding: 7px 9px;
-}
-
-.audit-card article {
-  border-top: 1px solid #edf1f8;
-  padding-top: 12px;
-  margin-top: 14px;
-}
-
-.audit-card article h3 {
-  font-size: 10px;
-  font-weight: 500;
-  margin: 0;
-}
-
-.audit-card pre {
-  font-size: 10px;
-  color: #748eaf;
-  overflow-wrap: anywhere;
-  max-height: 240px;
-  overflow: auto;
-  background: #f8fafd;
-  padding: 10px;
-  border-radius: 5px;
-}
+/* Chronological ticket activity, with readable labels and dates. */
+.ticket-timeline { list-style: none; margin: 0; padding: 0 0 0 8px; }
+.ticket-timeline li { position: relative; border-left: 2px solid #b8c6da; padding: 0 0 22px 20px; }
+.ticket-timeline li:last-child { padding-bottom: 0; border-color: transparent; }
+.ticket-timeline li::before { content: ""; position: absolute; left: -6px; top: 4px; width: 10px; height: 10px; border-radius: 50%; background: #3656b8; }
+.ticket-timeline strong { display: block; color: var(--text); font-size: 14px; }
+.ticket-timeline time, .timeline-time { display: block; margin-top: 5px; font-size: 13px; color: var(--text-secondary); }
+.ticket-timeline p { margin: 7px 0 0; font-size: 13px; color: var(--text-secondary); overflow-wrap: anywhere; }
 
 .helpdesk-card .card-header-actions {
   align-items: stretch;
@@ -358,13 +314,13 @@
 }
 
 .helpdesk-card button {
-  font-size: 11px;
+  font-size: 13px;
 }
 
 .pending-text,
 .response-status {
-  font-size: 11px;
-  color: #7c92b1;
+  font-size: 13px;
+  color: #495669;
   margin: 17px 0 0;
 }
 
@@ -399,19 +355,19 @@
   display: flex;
   gap: 7px;
   align-items: center;
-  color: #618770;
-  font-size: 11px;
+  color: #405a4b;
+  font-size: 13px;
   margin-bottom: 20px;
 }
 
 .text-button {
   border: 0;
   background: transparent;
-  color: #6384bc;
+  color: #3e5377;
   min-height: auto;
   padding: 0;
   margin-left: auto;
-  font-size: 11px;
+  font-size: 13px;
 }
 
 .metrics-grid {
@@ -423,21 +379,21 @@
 
 .metric-card {
   padding: 23px;
-  background: white;
+  background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 8px;
 }
 
 .metric-card>span {
   display: block;
-  font-size: 10px;
-  color: #7e93b0;
+  font-size: 13px;
+  color: #495768;
 }
 
 .metric-card>strong {
   display: block;
   font-size: 19px;
-  color: #5e779b;
+  color: #43556f;
   font-weight: 550;
   margin-top: 12px;
   text-transform: capitalize;
@@ -469,18 +425,18 @@
   border-radius: 8px;
   background: #f1f6ff;
   border: 1px solid #e1e9fa;
-  color: #6484bc;
+  color: #3e5377;
   margin-bottom: 20px;
 }
 
 .decision-card.escalate {
   background: #fcf7ef;
   border-color: #f0e6d4;
-  color: #957a4c;
+  color: #655232;
 }
 
 .decision-card span {
-  font-size: 10px;
+  font-size: 13px;
 }
 
 .decision-card h3 {
@@ -494,7 +450,7 @@
 }
 
 .card {
-  background: white;
+  background: var(--surface);
   border: 1px solid var(--border);
   padding: 24px;
   border-radius: 8px;
@@ -502,8 +458,8 @@
 }
 
 .reason-card p {
-  font-size: 12px;
-  color: #7089aa;
+  font-size: 13px;
+  color: #46566c;
   margin-bottom: 0;
 }
 
@@ -516,5 +472,47 @@
 
 .response-header h3 {
   margin: 0;
-  color: #6b84a6;
+  color: #435369;
 }
+
+.review-response-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; align-items: start; }
+.review-response-grid > .detail-card { min-width: 0; }
+.review-response-grid .card-header-actions { align-items: flex-start; flex-direction: column; gap: 16px; }
+.review-response-grid .action-buttons { flex-wrap: wrap; }
+@media (max-width: 980px) {
+  .review-response-grid { grid-template-columns: 1fr; }
+}
+
+.expandable-card > summary { display: flex; align-items: center; justify-content: space-between; gap: 12px; cursor: pointer; list-style: none; }
+.expandable-card > summary::-webkit-details-marker { display: none; }
+.expandable-card > summary h3 { margin: 0; }
+.expandable-content { padding-top: 20px; }
+
+.expandable-card { padding: 0; overflow: hidden; }
+.expandable-card > summary { padding: 20px; flex-wrap: wrap; background: #edf2fa; transition: background .15s; }
+.expandable-card > summary:hover { background: #dce6f5; }
+.expandable-card[open] > summary { border-bottom: 1px solid var(--border); }
+.expandable-card .expandable-content { padding: 20px; }
+.expand-hint { display: inline-flex; align-items: center; gap: 7px; font-size: 13px; font-weight: 600; color: #25489e; }
+.expand-hint .when-open { display: none; }
+.expandable-card[open] > summary .when-open { display: inline; }
+.expandable-card[open] > summary .when-closed { display: none; }
+.expandable-card[open] > summary .expand-hint svg { transform: rotate(180deg); }
+
+.message-heading > .copy-control { margin-left: auto; }
+.reply-heading-actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.copy-control { position: relative; flex-shrink: 0; }
+.copy-button { font-size: 13px; min-height: 34px; color: #25489e; border-color: #a8b9d5; }
+.copy-error { display: block; color: #8e2525; font-size: 13px; max-width: 230px; margin-top: 7px; }
+
+.helpdesk-update-form { margin-top: 16px; }
+.helpdesk-update-form label { display: block; margin: 16px 0 8px; font-size: 14px; }
+.helpdesk-update-form select { font-size: 13px; min-width: 0; }
+.helpdesk-status-label { padding: 8px 10px; border-radius: 5px; background: #e2e8f0; color: #334155; font-size: 13px; font-weight: 650; }
+.helpdesk-status-label.responded_waiting_info { color: #78350f; background: #fef3c7; }
+.helpdesk-status-label.responded_awaiting_confirmation { color: #1e40af; background: #dbeafe; }
+.helpdesk-status-label.responded_closed { color: #14532d; background: #dcfce7; }
+.status-help { color: var(--text-secondary); font-size: 13px; margin: 10px 0 16px; }
+
+.latest-helpdesk-note { white-space: pre-wrap; overflow-wrap: anywhere; font-size: 13px; color: var(--text-secondary); }
+.ticket-timeline p { white-space: pre-wrap; }

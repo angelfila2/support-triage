@@ -71,9 +71,17 @@ def _create_schema(connection):
             response_notes TEXT,
             legacy_id TEXT,
             processing_status TEXT NOT NULL DEFAULT 'pending',
-            processing_error TEXT
+            processing_error TEXT,
+            helpdesk_status TEXT NOT NULL DEFAULT 'open'
+                CHECK(helpdesk_status IN ('open','responded_waiting_info','responded_awaiting_confirmation','responded_closed'))
         )
     """)
+    # Existing installations already contain tickets: add the workflow field once.
+    columns = {row["name"] for row in connection.execute("PRAGMA table_info(tickets)")}
+    if "helpdesk_status" not in columns:
+        connection.execute("""ALTER TABLE tickets ADD COLUMN helpdesk_status TEXT NOT NULL DEFAULT 'open'
+            CHECK(helpdesk_status IN ('open','responded_waiting_info','responded_awaiting_confirmation','responded_closed'))""")
+        connection.execute("UPDATE tickets SET helpdesk_status='responded_awaiting_confirmation' WHERE responded=1")
     connection.execute("""
         CREATE UNIQUE INDEX IF NOT EXISTS tickets_legacy_id
         ON tickets (legacy_id)
@@ -92,6 +100,16 @@ def _create_schema(connection):
             result_json TEXT NOT NULL DEFAULT '{}'
         )
     """)
+    connection.execute("""
+        CREATE TABLE IF NOT EXISTS ticket_events (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            ticket_id INTEGER NOT NULL REFERENCES tickets(id),
+            occurred_at TEXT NOT NULL,
+            title TEXT NOT NULL,
+            description TEXT NOT NULL
+        )
+    """)
+    connection.execute("CREATE INDEX IF NOT EXISTS events_ticket ON ticket_events(ticket_id,id)")
     connection.execute("CREATE INDEX IF NOT EXISTS attempts_ticket ON ticket_attempts(ticket_id,started_at)")
     connection.execute("CREATE UNIQUE INDEX IF NOT EXISTS active_ticket_attempt ON ticket_attempts(ticket_id) WHERE status='processing'")
     connection.execute("""

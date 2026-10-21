@@ -15,8 +15,8 @@ code owns escalation policy. These rules deliberately limit automatic replies.
 | Evaluation only reports accuracy | Separate intent/routing/severity precision, recall and macro F1; critical escalation recall; repeated live runs with dataset/code/corpus hashes and model digests | Hand-calculated metric tests and `validate_agent` |
 | Missing development data | Reproducible adapted/synthetic cases, documented provenance and separate answer keys | Fixture validation and SQLite seed idempotence tests |
 | No inference bounds | Positive configurable transport timeout, total request deadline, bounded worker pool and nonblocking capacity admission | A timed-out job retains its slot until actual completion; timeout ticket remains failed |
-| Fragile injection keywords | Unicode normalization and bounded override/exfiltration patterns, capability restriction and extractive reply boundary | Benign MFA terminology and attack variants; critical severity never downgraded by safety branch |
-| Unprotected ticket API | Bearer read/write scopes, constant-time credential comparison, secure default and session-only frontend credential input | Missing/incorrect credential and read-vs-write API tests |
+| Fragile injection keywords | Unicode normalization and bounded override/exfiltration patterns, capability restriction and extractive reply boundary | Benign MFA terminology and attack variants; unsafe input skips inference and receives priority human review |
+| Unprotected ticket API | Bearer read/write scopes, constant-time credential comparison, secure default and automatic server-side local proxy authentication | Missing/incorrect credential and read-vs-write API tests |
 | Response request coercion | Strict booleans, severity literals, bounded notes; frontend handles structured validation errors | Invalid response-model payload tests |
 | No manual intake | Upload/manual modes, input limits and one-issue instruction | Production build, lint and API input tests |
 | Rebuilt/duplicated vector index | Persistent Chroma, content-addressed IDs and embedding reuse | Restart, no-duplicate and changed-document tests |
@@ -55,8 +55,8 @@ a model-provided number, not a calibrated probability.
 
 Create or configure the local `backend/.env` file (not versioned). Use a random write token and,
 optionally, a distinct read token, each at least 32 characters. Start the backend,
-then enter the credential in the dashboard header. It is held in sessionStorage,
-not a frontend environment variable or URL. Write credentials permit intake and
+the local frontend server reads the credential automatically. It is never stored
+in browser storage, a frontend environment variable or a URL. Write credentials permit intake and
 updates; read credentials permit ticket reads only. HTTPS and operator secret
 management are required for remote use. This is scoped demo authentication, not
 per-customer tenancy or a replacement for an identity provider. Deliberately
@@ -120,3 +120,24 @@ and deployment packaging remain separate work.
 These are inspected regression fixtures with agent-authored labels. Independently
 human-labelled representative evaluation remains future work. CI/Docker and
 portfolio presentation were deliberately excluded from this change.
+
+
+## Semantic incident assessment
+
+The combined classifier now returns a validated `incident` object: impact scope,
+service availability, incident status, workaround availability, security impact,
+and supporting ticket quotations. Ollama receives the Pydantic JSON schema in the
+same assessment request, with separate system/user chat messages and few-shot examples; this adds no second assessment call.
+
+`agent/policy.py::incident_policy()` applies severity rules to those facts instead
+of searching ticket wording. Ongoing widespread unavailability becomes SEV1;
+multi-user disruption without a confirmed workaround becomes SEV2. A confirmed
+workaround permits SEV3 with human review for multi-user disruption. Resolved and
+hypothetical incidents do not independently trigger an emergency. Unclear possible
+major incidents and invalid assessments receive SEV2 human review. Suspicious input
+still skips the model entirely and receives SEV2 review because impact is unassessed.
+
+Only quoted evidence found in the ticket is retained (ignoring case and whitespace); FAQ or invented quotations are discarded and counted in the audit. An active or resolved incident with no verified evidence falls back to human review. This
+checks source grounding, not whether the model interpreted the quotation correctly.
+The complete incident object and policy reason remain in the saved attempt result
+under `_assessment`. Existing tickets are not automatically reclassified.

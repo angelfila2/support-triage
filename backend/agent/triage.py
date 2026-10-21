@@ -12,7 +12,7 @@ from backend.agent.classifier import (
 from backend.agent.responder import create_responder, generate_response
 from backend.agent.router import route_ticket
 from backend.agent.safety import check_prompt_injection
-from backend.agent.policy import capability, enforce_policy, severity_floor
+from backend.agent.policy import capability, enforce_policy
 from backend.config import KNOWLEDGE_BASE_DIR
 from backend.rag.kb import load_knowledge_base
 from backend.rag.retriever import create_retriever, retrieve_documents
@@ -47,7 +47,7 @@ def triage_ticket(subject, body):
     is_suspicious = check_prompt_injection(ticket_text)
 
     if is_suspicious:
-        severity = severity_floor(ticket_text) or "SEV3"
+        severity = "SEV2"  # Unassessed impact: priority human review without inference.
         return {
             "category": "other",
             "urgency": severity,
@@ -55,7 +55,7 @@ def triage_ticket(subject, body):
             "is_suspicious": True,
             "can_auto_reply": False,
             "decision": "ESCALATE",
-            "reason": "Potential prompt injection detected.",
+            "reason": "Potential prompt injection detected. Incident impact unassessed; priority human review required.",
             "response": "",
             "retrieved_sources": [],
             "sla": SLA_MAP[severity],

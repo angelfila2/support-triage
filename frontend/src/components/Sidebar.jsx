@@ -6,7 +6,6 @@ function Sidebar() {
         <span className="logo-mark"><img src="/support-corgi.png" alt="Corgi wearing a support headset" width="40" height="40" /></span>
         <span>supportflow<span className="brand-period">.</span></span>
       </Link>
-      <div className="workspace-switch"><span className="workspace-avatar">S</span><div><strong>Support workspace</strong><small>IT service desk</small></div></div>
       <span className="nav-caption">WORKSPACE</span>
       <nav className="sidebar-nav" aria-label="Main navigation">
         <NavLink aria-label="Ticket inbox" title="Ticket inbox" to="/tickets" className={({

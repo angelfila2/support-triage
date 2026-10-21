@@ -11,7 +11,7 @@ A React/Vite helpdesk dashboard. The root README covers backend/Ollama setup;
 | Insights | `src/pages/InsightsPage.jsx` | `/analytics` |
 
 `App.jsx` connects the screens. `components/` contains visible UI pieces;
-`services/api.js` handles API requests and the session credential. `styles/index.css`
+`services/api.js` sends same-origin API requests; no browser credential is needed. `styles/index.css`
 loads the workspace, page and shared responsive styles in their required order.
 
 ```powershell
@@ -22,7 +22,11 @@ npm run lint
 ```
 
 The API defaults to `http://127.0.0.1:8000`. Override `VITE_API_URL` in a local
-`.env` if needed and restart Vite. Never put credentials in frontend environment
-variables; use the header's API access menu. Environment files are not committed.
+`.env` if needed and restart Vite. The Vite server reads `API_WRITE_TOKEN` from
+`backend/.env` and authenticates upstream requests automatically. There is no
+Connect API form. Never put credentials in frontend environment variables.
+Restart the backend and frontend after changing backend credentials. Environment
+files are not committed. The same proxy works with `npm run preview`; static
+remote hosting needs a server-side API integration of its own.
 
 `public/support-corgi.png` is the sidebar mascot and browser favicon.

@@ -1,10 +1,11 @@
+import HelpdeskUpdateForm from "../components/HelpdeskUpdateForm";
+import TicketTimeline from "../components/TicketTimeline";
 import { apiFetch } from "../services/api";
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { ArrowLeft, Check, Clock3, FileText, Pencil, ShieldAlert, Sparkles, UserRound, X } from "lucide-react";
+import { ArrowLeft, ChevronDown, Check, Clock3, Clipboard, Pencil, ShieldAlert, Sparkles, UserRound, X } from "lucide-react";
 import { API_URL } from "../config";
 const REVIEW_CATEGORIES = ["password_reset", "billing_question", "shipping_delay", "login_issues", "other"];
-const SEVERITY_OPTIONS = ["SEV1", "SEV2", "SEV3", "SEV4", "SEV5"];
 const SLA_MAP = {
   SEV1: "4 hours",
   SEV2: "1 day",
@@ -25,7 +26,6 @@ function TicketDetailsPageContent({
 }) {
   const [ticket, setTicket] = useState(null);
   const [retrying, setRetrying] = useState(false);
-  const [attemptHistory, setAttemptHistory] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [reviewMode, setReviewMode] = useState(null);
@@ -33,10 +33,6 @@ function TicketDetailsPageContent({
   const [reviewNotes, setReviewNotes] = useState("");
   const [savingReview, setSavingReview] = useState(false);
   const [reviewError, setReviewError] = useState("");
-  const [helpdeskMode, setHelpdeskMode] = useState(false);
-  const [updatedSeverity, setUpdatedSeverity] = useState("");
-  const [responseNotes, setResponseNotes] = useState("");
-  const [savingUpdate, setSavingUpdate] = useState(false);
   const [updateError, setUpdateError] = useState("");
   useEffect(() => {
     const controller = new AbortController();
@@ -102,38 +98,6 @@ function TicketDetailsPageContent({
       setSavingReview(false);
     }
   };
-  const saveHelpdeskUpdate = async () => {
-    if (savingUpdate) return;
-    if (!SEVERITY_OPTIONS.includes(updatedSeverity)) {
-      setUpdateError("Select a valid urgency level.");
-      return;
-    }
-    setSavingUpdate(true);
-    setUpdateError("");
-    try {
-      const response = await apiFetch(`${API_URL}/api/tickets/${encodeURIComponent(ticket.id)}/respond`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          responded: true,
-          urgency: updatedSeverity,
-          response_notes: responseNotes.trim() || null
-        })
-      });
-      if (!response.ok) {
-        throw new Error(await getErrorMessage(response, "Unable to update ticket."));
-      }
-      setTicket(normalizeTicket(await response.json()));
-      setHelpdeskMode(false);
-      setResponseNotes("");
-    } catch (err) {
-      setUpdateError(err.message || "Unable to update ticket.");
-    } finally {
-      setSavingUpdate(false);
-    }
-  };
   const retryTicket = async () => {
     setRetrying(true);
     setError("");
@@ -143,7 +107,6 @@ function TicketDetailsPageContent({
       });
       if (!response.ok) throw new Error(await getErrorMessage(response, "Retry failed"));
       setTicket(normalizeTicket(await response.json()));
-      setAttemptHistory(null);
     } catch (err) {
       try {
         const response = await apiFetch(`${API_URL}/api/tickets/${encodeURIComponent(ticketId)}`);
@@ -154,21 +117,11 @@ function TicketDetailsPageContent({
       setRetrying(false);
     }
   };
-  const loadAttempts = async () => {
-    const response = await apiFetch(`${API_URL}/api/tickets/${encodeURIComponent(ticketId)}/attempts?limit=20`);
-    if (response.ok) setAttemptHistory(await response.json());else setUpdateError("Unable to load audit history.");
-  };
   const openReviewModal = mode => {
     setReviewMode(mode);
     setCorrectedCategory(ticket.corrected_category || "");
     setReviewNotes(ticket.review_notes || "");
     setReviewError("");
-  };
-  const openHelpdeskModal = () => {
-    setHelpdeskMode(true);
-    setUpdatedSeverity(ticket.urgency || "SEV3");
-    setResponseNotes(ticket.response_notes || "");
-    setUpdateError("");
   };
   if (loading) {
     return <div className="loading-state" role="status">
@@ -209,7 +162,7 @@ function TicketDetailsPageContent({
       <div className="details-grid">
         <div className="main-panel">
           <section className="detail-card">
-            <div className="message-heading"><span className="message-avatar"><UserRound size={18} /></span><div><h2>Original request</h2><span>Submitted ticket</span></div><FileText size={16} /></div>
+            <div className="message-heading"><span className="message-avatar"><UserRound size={18} /></span><div><h2>Original request</h2><span>Submitted ticket</span></div><CopyButton text={`${ticket.subject || "Untitled request"}\n\n${ticket.body || ""}`} label="Copy original request" /></div>
             <div className="meta-text">
               Created: {formatDate(ticket.created_at)}
             </div>
@@ -220,12 +173,13 @@ function TicketDetailsPageContent({
           </section>
 
           {ticket.response && <section className="detail-card auto-reply-card">
-              <div className="reply-card-heading"><span><Sparkles size={16} /> AI suggested reply</span><small>Grounded in your knowledge base</small></div>
+              <div className="reply-card-heading"><span><Sparkles size={16} /> AI suggested reply</span><div className="reply-heading-actions"><small>Grounded in your knowledge base</small><CopyButton text={ticket.response} label="Copy AI suggested reply" /></div></div>
               <div className="response-content">
                 <pre>{ticket.response}</pre>
               </div>
             </section>}
 
+          <div className="review-response-grid">
           <section className="detail-card">
             <div className="card-header-actions">
               <h3>Review AI decision</h3>
@@ -269,11 +223,17 @@ function TicketDetailsPageContent({
                 </button>
               </div>}
           </section>
+          <section className="detail-card helpdesk-card">
+            <h3>Helpdesk update</h3>
+            <HelpdeskUpdateForm key={`${ticket.helpdesk_status}-${ticket.response_notes}`} ticket={ticket} onSaved={record => setTicket(normalizeTicket(record))} />
+          </section>
+          </div>
         </div>
 
         <div className="side-panel">
-          <section className="detail-card info-card">
-            <h3><Sparkles size={16} /> AI assessment</h3>
+          <details className="detail-card info-card expandable-card">
+            <summary><h3><Sparkles size={16} /> AI assessment</h3><span className="expand-hint"><span className="when-closed">View details</span><span className="when-open">Hide details</span><ChevronDown size={18} aria-hidden="true" /></span></summary>
+            <div className="expandable-content">
 
             <div className="info-row">
               <span className="label">Category:</span>
@@ -311,37 +271,11 @@ function TicketDetailsPageContent({
               <span className="label">Assessment Reason:</span>
               <p>{ticket.reason || "No reason provided."}</p>
             </div>
-          </section>
-
-          <section className="detail-card audit-card"><h3>Decision evidence</h3>
-        <details><summary>Decision audit ({ticket.attempt_count || 0} attempts)</summary>
-          <p>Model: {ticket.provenance?.model || "Not recorded"}</p>
-          <p>Sources: {(ticket.retrieved_sources || []).join(", ") || "None"}</p>
-          <button type="button" onClick={loadAttempts}>Load attempt history</button>
-          {attemptHistory?.map(attempt => <article key={attempt.id}><h3>{attempt.status} — {formatDate(attempt.started_at)}</h3>
-            <p>{attempt.error}</p><p>Model: {attempt.provenance.model || "Unavailable"}</p>
-            {attempt.evidence.map(item => <details key={item.source}><summary>{item.source} — {item.sha256.slice(0, 12)}</summary><pre style={{
-                  whiteSpace: "pre-wrap"
-                }}>{item.content}</pre></details>)}
-          </article>)}
-        </details>
-          </section>
-          <section className="detail-card helpdesk-card">
-            <div className="card-header-actions">
-              <h3>Agent response</h3>
-              <button type="button" className="button primary-button" onClick={openHelpdeskModal} disabled={savingUpdate}>
-                {ticket.responded ? "Update Response" : "Respond / Resolve"}
-              </button>
             </div>
+          </details>
 
-            {ticket.responded ? <div className="response-status">
-                <span className="badge resolved">Responded</span>
-                <p className="meta-text">
-                  At: {formatDate(ticket.response_datetime)}
-                </p>
-                {ticket.response_notes && <p>{ticket.response_notes}</p>}
-              </div> : <p className="pending-text">Awaiting helpdesk response.</p>}
-          </section>
+          <TicketTimeline ticket={ticket} />
+
         </div>
       </div>
 
@@ -388,43 +322,32 @@ function TicketDetailsPageContent({
           </div>
         </div>}
 
-      {helpdeskMode && <div className="modal-backdrop">
-          <div className="modal-card" role="dialog" aria-modal="true" aria-labelledby="helpdesk-title">
-            <h3 id="helpdesk-title">Update Helpdesk Response</h3>
-
-            {updateError && <div className="error-message" role="alert">
-                {updateError}
-              </div>}
-
-            <div className="form-group">
-              <label htmlFor="updated-severity">Urgency Level</label>
-              <select id="updated-severity" value={updatedSeverity} onChange={event => setUpdatedSeverity(event.target.value)} disabled={savingUpdate}>
-                {SEVERITY_OPTIONS.map(severity => <option key={severity} value={severity}>
-                    {severity} ({SLA_MAP[severity]})
-                  </option>)}
-              </select>
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="response-notes">
-                Response / Resolution Notes
-              </label>
-              <textarea id="response-notes" rows={4} value={responseNotes} onChange={event => setResponseNotes(event.target.value)} placeholder="Enter notes about how this ticket was resolved..." disabled={savingUpdate} />
-            </div>
-
-            <div className="modal-actions">
-              <button type="button" className="button secondary-button" onClick={() => setHelpdeskMode(false)} disabled={savingUpdate}>
-                Cancel
-              </button>
-
-              <button type="button" className="button primary-button" disabled={savingUpdate} onClick={saveHelpdeskUpdate}>
-                {savingUpdate ? "Updating..." : "Save Response"}
-              </button>
-            </div>
-          </div>
-        </div>}
     </div>;
 }
+function CopyButton({ text, label }) {
+  const [status, setStatus] = useState("");
+  useEffect(() => {
+    if (!status) return;
+    const timer = setTimeout(() => setStatus(""), 3000);
+    return () => clearTimeout(timer);
+  }, [status]);
+  async function copyText() {
+    try {
+      await navigator.clipboard.writeText(text);
+      setStatus("Copied");
+    } catch {
+      setStatus("Copy failed — select and copy the text manually.");
+    }
+  }
+  return <div className="copy-control">
+    <button type="button" className="copy-button" onClick={copyText} aria-label={label} title={label}>
+      {status === "Copied" ? <Check size={16} aria-hidden="true" /> : <Clipboard size={16} aria-hidden="true" />}
+      <span>{status === "Copied" ? "Copied" : "Copy"}</span>
+    </button>
+    <span className={status.startsWith("Copy failed") ? "copy-feedback copy-error" : "sr-only"} role="status">{status}</span>
+  </div>;
+}
+
 async function getErrorMessage(response, fallback) {
   const data = await response.json().catch(() => null);
   return typeof data?.detail === "string" ? data.detail : data?.detail?.message || `${fallback} (${response.status})`;

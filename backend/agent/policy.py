@@ -11,17 +11,31 @@ def has(pattern, text):
     return re.search(pattern, text, re.I | re.S) is not None
 
 
-def severity_floor(text):
-    if has(r"\b(?:breach|severe data loss)\b", text) or (
-        has(r"\b(?:entire|whole|all customers|all users|everyone|widespread)\b", text)
-        and has(r"\b(?:outage|down|unavailable|inaccessible|cannot|unable|blocked)\b", text)
-    ):
-        return "SEV1"
-    if has(r"\b(?:all employees|multiple users|our company|whole team)\b", text) and has(
-        r"\b(?:cannot|unable|blocked|disruption)\b", text
-    ):
-        return "SEV2"
-    return None
+def incident_policy(incident):
+    """Assign incident priority from assessed facts, never raw ticket phrases."""
+    if not incident:
+        return "SEV2", True, "Incident impact was not assessed; human review required."
+    status = incident["incident_status"]
+    if status in {"resolved", "hypothetical", "not_incident"}:
+        return None, False, "No ongoing incident was identified."
+    if incident["security_impact"] in {"major_breach", "severe_data_loss"}:
+        return "SEV1", True, "Major security impact or severe data loss requires immediate escalation."
+    scope = incident["impact_scope"]
+    availability = incident["service_availability"]
+    if status == "ongoing" and scope == "widespread" and availability == "unavailable":
+        return "SEV1", True, "Ongoing widespread service failure requires immediate escalation."
+    if scope in {"multiple_users", "widespread"} and availability in {"degraded", "unavailable"}:
+        if incident["workaround_available"] == "yes":
+            return "SEV3", True, "Multi-user disruption has a reported workaround; human review required."
+        return "SEV2", True, "Multi-user service disruption without a confirmed workaround requires human investigation."
+    if scope == "individual" and incident["security_impact"] == "none" and status in {"ongoing", "unknown"}:
+        if status == "unknown" or availability == "unknown":
+            return "SEV3", True, "Individual issue needs clarification; human review required."
+        return None, False, "Individual issue does not indicate a widespread outage."
+    if (status == "unknown" or scope == "unknown" or availability == "unknown"
+            or incident["security_impact"] == "unknown"):
+        return "SEV2", True, "Potential incident has unclear impact; priority human review required."
+    return None, False, "Incident impact does not require a major-incident override."
 
 
 def login_progress(text):
@@ -58,8 +72,6 @@ def assess_policy(text, context):
                   troubleshooting_exhausted=False, reason="No documented self-service capability matched.")
     if not isinstance(context, str) or not context.strip():
         return {**result, "reason": "No retrieved evidence supports a reply."}
-    if severity_floor(text):
-        return {**result, "reason": "Critical or major disruption requires human escalation."}
     if has(r"\b(?:hackerrank|claude|visa|delete (?:my |the )?account|remove (?:my |the )?account|cancel (?:my )?subscription|change (?:my )?(?:plan|address|currency))\b", text):
         return {**result, "reason": "Product-specific or account-changing requests are outside the current FAQ capabilities."}
     if has(r"\b(?:api|endpoint|webhook|algorithm|saml|sso|mfa|2fa|certificate|server configuration|token policy|configure|configuration|fingerprint)\b", text):
@@ -123,12 +135,20 @@ def enforce_policy(text, context, assessment):
         result["can_auto_reply"] &= not result["troubleshooting_exhausted"]
     else:
         result["can_auto_reply"] = False
-    floor = severity_floor(text)
-    if floor and int(result.get("urgency", "SEV3")[-1]) > int(floor[-1]):
+    floor, incident_blocked, incident_reason = incident_policy(result.get("incident"))
+    result["incident_policy_reason"] = incident_reason
+    result["model_urgency"] = result.get("model_urgency", result.get("urgency", "SEV3"))
+    if incident_blocked:
+        result["can_auto_reply"] = False
+    elif result.get("incident", {}).get("incident_status") in {"resolved", "hypothetical", "not_incident"} and result.get("urgency") in {"SEV1", "SEV2"}:
+        result["urgency"] = "SEV3"
+    if floor:
         result["urgency"] = floor
-    # Known FAQ workflows have explicit service tiers. Never downgrade a
-    # critical/major model assessment; those still require human review.
-    elif policy["allowed"] and result.get("urgency") in {"SEV3", "SEV4", "SEV5"}:
+    elif result.get("urgency") in {"SEV1", "SEV2"}:
+        # Emergency priority must be supported by assessed incident facts.
+        result["urgency"] = "SEV3"
+    # Known FAQ workflows have explicit service tiers after incident handling.
+    if not incident_blocked and policy["allowed"] and result.get("urgency") in {"SEV3", "SEV4", "SEV5"}:
         if policy["category"] == "login_issues":
             result["urgency"] = "SEV3"
         elif policy["category"] == "billing_question":
@@ -138,5 +158,5 @@ def enforce_policy(text, context, assessment):
         elif policy["category"] == "shipping_delay":
             result["urgency"] = "SEV4" if has(r"delay|late", text) else "SEV5"
     result["model_reason"] = result.get("model_reason", result.get("reason", ""))
-    result["reason"] = policy["reason"] + " " + result["model_reason"]
+    result["reason"] = incident_reason + " " + policy["reason"] + " " + result["model_reason"]
     return result

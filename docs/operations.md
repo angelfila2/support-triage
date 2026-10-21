@@ -65,3 +65,27 @@ hook exists only in that test entry point. Never deploy that entry point.
 The normal application entry point remains `uvicorn backend.api:app`.
 
 CI/Docker packaging and portfolio presentation are outside this change.
+
+
+## Seamless local dashboard access
+
+The Vite development/preview server reads the write credential from `backend/.env`
+and forwards same-origin `/api` requests to the loopback backend. The browser
+never receives this credential. Start the two servers; there is no manual connect
+step. Requests from unrelated origins are rejected before they reach the proxy.
+Restart both servers after an environment change. Direct API access retains bearer
+scope checks. This local proxy is not a user-authentication system for public hosting.
+
+
+### Helpdesk response status
+
+Ticket details includes an independent helpdesk status: Open / reopened,
+Responded (waiting for user info), Responded (awaiting user confirmation), and
+Responded (closed). Use the single Helpdesk update form to choose a status, optionally adjust urgency, and enter a required update note. Blank or whitespace-only notes are rejected by both the UI and API. Status and notes save together in one transaction; the timeline preserves each note even when the status stays the same. Selecting
+a Responded state records the reply as sent by the helpdesk outside this app;
+the application does not deliver email. Reopening preserves the response history.
+Every transition is logged in the timeline. Helpdesk updates preserve the AI assessment and existing response timestamp. Urgency stays unchanged unless explicitly adjusted. The latest note appears on the ticket; earlier notes remain in the timeline.
+
+Startup adds `tickets.helpdesk_status` to older databases without deleting rows.
+Previously responded tickets default to awaiting user confirmation; helpdesk staff
+can adjust them. New response records also default to awaiting confirmation.
