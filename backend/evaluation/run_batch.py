@@ -1,9 +1,21 @@
+import csv
 import sys
 
+import pandas as pd
+
 from backend.config import SAMPLE_TICKETS_FILE, TRIAGE_RESULTS_FILE
-from backend.evaluation.ticketloader import load_tickets
 from backend.agent.triage import triage_ticket
-from backend.evaluation.resultwriter import save_result
+
+
+def save_result(file_path, record):
+    """Append one prediction and its labels to the evaluation export."""
+    write_header = not file_path.exists() or file_path.stat().st_size == 0
+    with file_path.open("a", newline="", encoding="utf-8") as output:
+        # The record defines the full schema, including routing/severity labels.
+        writer = csv.DictWriter(output, fieldnames=list(record))
+        if write_header:
+            writer.writeheader()
+        writer.writerow(record)
 
 
 def main():
@@ -16,7 +28,7 @@ def main():
         print(f"Error: Sample tickets file not found at: {SAMPLE_TICKETS_FILE}")
         sys.exit(1)
 
-    tickets = load_tickets(SAMPLE_TICKETS_FILE)
+    tickets = pd.read_csv(SAMPLE_TICKETS_FILE)
     print(f"Loaded {len(tickets)} benchmark tickets from {SAMPLE_TICKETS_FILE.name}")
 
     # 2. Prepare clean output results file

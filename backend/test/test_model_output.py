@@ -6,7 +6,6 @@ import pytest
 
 
 from backend.agent import triage
-from backend.agent.answerability import check_answerability
 from backend.agent.classifier import classify_ticket
 from backend.agent.router import route_ticket
 from backend.agent.structured_output import extract_json
@@ -155,48 +154,6 @@ def test_combined_assessment_requires_context_for_auto_reply():
 
     assert result["can_auto_reply"] is False
     assert route_ticket(result, False) == "ESCALATE"
-
-
-@pytest.mark.parametrize(
-    ("response", "expected"),
-    [
-        ('{"can_auto_reply": true}', True),
-        ('{"can_auto_reply": false}', False),
-        ('```json\n{"can_auto_reply": true}\n```', True),
-        ('Result: {"can_auto_reply": true}', True),
-        ('{"can_auto_reply": "false"}', False),
-        ('{"can_auto_reply": "true"}', False),
-        ('{"can_auto_reply": 1}', False),
-        ("{}", False),
-        ("Invalid response", False),
-    ],
-)
-def test_legacy_answerability_requires_json_boolean(response, expected):
-    model = Mock()
-    model.invoke.return_value = response
-
-    result = check_answerability(model, "Example ticket", "Relevant FAQ")
-
-    assert result is expected
-
-
-def test_legacy_answerability_skips_empty_context():
-    model = Mock()
-
-    assert check_answerability(model, "Example ticket", "") is False
-
-    model.invoke.assert_not_called()
-
-
-def test_legacy_answerability_service_failure_disables_auto_reply():
-    model = Mock()
-    model.invoke.side_effect = RuntimeError("Ollama unavailable")
-
-    assert check_answerability(
-        model,
-        "Example ticket",
-        "Relevant FAQ",
-    ) is False
 
 
 def install_fake_engine(monkeypatch, assessment, documents=None):

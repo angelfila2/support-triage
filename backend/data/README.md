@@ -59,7 +59,7 @@ Run from the repository root:
 
 ```powershell
 python -m backend.evaluation.prepare_dataset
-python -m backend.evaluation.main
+python -m backend.evaluation.run_batch
 python -m backend.evaluation.evaluate
 ```
 

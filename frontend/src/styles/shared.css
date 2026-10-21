@@ -1,0 +1,597 @@
+/* Feedback and dialogs */
+
+.api-error,
+.error-message,
+.error-state,
+.suspicious-warning {
+  border: 1px solid #f0dcd6;
+  border-radius: 7px;
+  background: #fffaf8;
+  color: #9d675a;
+  padding: 18px 21px;
+  margin: 20px 0;
+  font-size: 12px;
+}
+
+.queue-panel>.api-error {
+  margin: 10px 20px 24px;
+}
+
+.api-error p {
+  margin: 7px 0 0;
+}
+
+.api-error>span {
+  display: block;
+  font-size: 11px;
+  margin-top: 10px;
+}
+
+.suspicious-warning {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.suspicious-warning p {
+  margin: 5px 0 0;
+}
+
+.loading-container,
+.loading-state,
+.queue-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 280px;
+  gap: 18px;
+  color: #7a94b8;
+  font-size: 12px;
+}
+
+.loading-container {
+  min-height: 500px;
+}
+
+.loading-container h3 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.loading-container p {
+  font-size: 12px;
+}
+
+.spinner {
+  width: 27px;
+  height: 27px;
+  border: 2px solid #e8edf8;
+  border-top-color: #7697db;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.spinning {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: #24314d55;
+  backdrop-filter: blur(3px);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.modal-card {
+  width: 100%;
+  max-width: 470px;
+  max-height: 90vh;
+  overflow: auto;
+  padding: 28px;
+  background: white;
+  border: 1px solid #e0e7f3;
+  border-radius: 12px;
+  box-shadow: 0 20px 80px #23365033;
+}
+
+.modal-card h3 {
+  font-size: 18px;
+  color: #607da5;
+  margin-bottom: 25px;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  color: #738dae;
+  font-size: 11px;
+  margin-bottom: 9px;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  border-top: 1px solid var(--border);
+  padding-top: 20px;
+  margin-top: 25px;
+}
+
+@media(min-width:1600px) {
+  .main-content {
+    padding: 42px 48px 60px;
+  }
+  .tickets-table td {
+    padding-block: 22px;
+  }
+}
+
+@media(max-width:1200px) {
+  .sidebar {
+    width: 196px;
+    padding-inline: 12px;
+  }
+  .app-shell {
+    margin-left: 196px;
+  }
+  .sidebar-logo {
+    font-size: 20px;
+  }
+  .header {
+    padding-inline: 24px;
+  }
+  .main-content {
+    padding: 28px 24px 40px;
+  }
+  .ticket-summary {
+    gap: 10px;
+  }
+  .ticket-summary-item {
+    padding: 16px 13px;
+  }
+  .summary-icon {
+    width: 29px;
+    height: 29px;
+  }
+  .ticket-summary-item>div>span {
+    font-size: 9px;
+  }
+  .intake-grid {
+    grid-template-columns: minmax(0,1fr) 240px;
+    gap: 22px;
+  }
+  .details-grid {
+    grid-template-columns: minmax(0,1fr) 270px;
+    gap: 16px;
+  }
+  .detail-card {
+    padding: 20px;
+  }
+  .reply-card-heading {
+    align-items: start;
+    flex-direction: column;
+    gap: 7px;
+  }
+}
+
+@media(max-width:980px) {
+  .sidebar {
+    width: 72px;
+    padding-inline: 10px;
+  }
+  .app-shell {
+    margin-left: 72px;
+  }
+  .sidebar-logo {
+    justify-content: center;
+    padding: 0;
+  }
+  .sidebar-logo>span:last-child,
+  .workspace-switch,
+  .nav-caption,
+  .sidebar-button span,
+  .sidebar-bottom {
+    display: none;
+  }
+  .sidebar-nav {
+    margin-top: 20px;
+  }
+  .sidebar-button {
+    padding: 13px;
+    justify-content: center;
+  }
+  .sidebar-button.active::after {
+    display: none;
+  }
+  .intake-grid {
+    grid-template-columns: minmax(0,1fr);
+  }
+  .intake-guide {
+    padding: 14px 6px;
+  }
+  .intake-guide>h2 br {
+    display: none;
+  }
+  .intake-guide ol {
+    display: grid;
+    grid-template-columns: repeat(3,1fr);
+    gap: 20px;
+  }
+  .guide-safety {
+    max-width: 600px;
+  }
+  .details-grid {
+    grid-template-columns: minmax(0,1fr) 260px;
+  }
+  .analytics-metrics {
+    grid-template-columns: repeat(2,1fr);
+  }
+}
+
+@media(max-width:760px) {
+  .header {
+    padding: 14px 20px;
+    min-height: 65px;
+  }
+  .header-actions {
+    gap: 12px;
+  }
+  .breadcrumbs>span,
+  .breadcrumbs>svg,
+  .header-divider {
+    display: none;
+  }
+  .main-content {
+    padding: 27px 20px 35px;
+  }
+  .ticket-summary {
+    grid-template-columns: repeat(2,1fr);
+  }
+  .ticket-summary-item {
+    padding: 16px;
+  }
+  .ticket-summary-item>div>span {
+    font-size: 10px;
+  }
+  .queue-tabs {
+    gap: 20px;
+  }
+  .queue-tabs>span {
+    display: none;
+  }
+  .ticket-toolbar {
+    gap: 9px;
+  }
+  .queue-search {
+    flex-basis: 100%;
+  }
+  .filter-label {
+    display: none;
+  }
+  .ticket-toolbar select {
+    flex: 1 1 40%;
+    max-width: none;
+  }
+  .ticket-pagination {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .ticket-pagination>div {
+    align-self: flex-end;
+  }
+  .queue-footnote {
+    text-align: center;
+    line-height: 1.8;
+    align-items: start;
+  }
+  .queue-footnote>svg {
+    flex-shrink: 0;
+    margin-top: 3px;
+  }
+  .details-grid {
+    grid-template-columns: minmax(0,1fr);
+  }
+  .side-panel {
+    display: grid;
+    grid-template-columns: repeat(2,minmax(0,1fr));
+  }
+  .side-panel>:first-child {
+    grid-column: 1/-1;
+  }
+  .intake-guide ol {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+  .intake-guide li {
+    padding: 12px 0;
+  }
+  .analytics-grid {
+    grid-template-columns: 1fr;
+  }
+  .title-row h1 {
+    font-size: 21px;
+  }
+  .title-row {
+    align-items: start;
+  }
+  .result-heading {
+    flex-wrap: wrap;
+  }
+  .result-heading>div {
+    flex-basis: 100%;
+  }
+  .metrics-grid {
+    gap: 10px;
+  }
+  .metric-card {
+    padding: 16px;
+  }
+  .metric-card>strong {
+    font-size: 15px;
+  }
+  .app-shell>footer {
+    padding: 16px 20px;
+    flex-direction: column;
+    gap: 5px;
+  }
+  .access-popover {
+    right: -90px;
+  }
+}
+
+@media(max-width:500px) {
+  .sidebar {
+    width: 54px;
+    padding: 0 5px;
+  }
+  .app-shell {
+    margin-left: 54px;
+  }
+  .sidebar-logo {
+    height: 65px;
+  }
+  .logo-mark {
+    width: 28px;
+    height: 30px;
+  }
+  .sidebar-button {
+    padding: 12px 8px;
+  }
+  .header {
+    padding: 12px 14px;
+  }
+  .header-actions {
+    gap: 10px;
+  }
+  .header-actions .primary-button {
+    font-size: 10px;
+    padding: 8px 9px;
+  }
+  .access-menu summary>span:not(.connection-dot) {
+    display: none;
+  }
+  .breadcrumbs {
+    font-size: 10px;
+  }
+  .main-content {
+    padding: 24px 14px 30px;
+  }
+  h1 {
+    font-size: 24px;
+  }
+  .tickets-heading {
+    gap: 8px;
+    align-items: start;
+  }
+  .tickets-heading p {
+    font-size: 11px;
+    max-width: 210px;
+  }
+  .tickets-heading>button {
+    padding: 7px;
+    font-size: 0;
+    min-height: 29px;
+  }
+  .tickets-heading>button svg {
+    width: 13px;
+  }
+  .ticket-summary-item {
+    padding: 15px 11px;
+  }
+  .summary-icon {
+    width: 25px;
+    height: 25px;
+  }
+  .summary-icon svg {
+    width: 14px;
+  }
+  .ticket-summary-item>div>span {
+    font-size: 9px;
+  }
+  .ticket-summary-item strong {
+    font-size: 23px;
+  }
+  .queue-tabs {
+    gap: 16px;
+    padding: 0 13px;
+  }
+  .queue-tabs button {
+    font-size: 10px;
+  }
+  .ticket-toolbar {
+    padding: 14px;
+  }
+  .intake-card-heading {
+    padding: 20px;
+  }
+  .ticket-entry-modes {
+    padding: 20px 20px 0;
+  }
+  .manual-ticket-form {
+    padding: 22px 20px 0;
+  }
+  .intake-submit {
+    margin: 22px -20px 0;
+    padding: 15px 20px;
+    flex-wrap: wrap;
+  }
+  .intake-submit>span {
+    font-size: 9px;
+  }
+  .intake-submit button {
+    margin-left: auto;
+  }
+  .side-panel {
+    display: flex;
+  }
+  .detail-card {
+    padding: 19px;
+  }
+  .title-row {
+    flex-direction: column;
+  }
+  .card-header-actions {
+    align-items: start;
+    flex-direction: column;
+  }
+  .metrics-grid {
+    grid-template-columns: 1fr;
+  }
+  .metric-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .metric-card>strong {
+    margin: 0;
+  }
+  .confidence-track {
+    display: none;
+  }
+  .analytics-card {
+    padding: 17px;
+  }
+  .analytics-card-top {
+    font-size: 9px;
+  }
+  .analytics-panel {
+    padding: 20px;
+  }
+  .upload-section {
+    padding: 20px;
+  }
+  .drop-zone {
+    padding: 22px 16px;
+  }
+  .access-popover {
+    right: -100px;
+    width: 270px;
+  }
+  .email-preview {
+    padding: 20px;
+  }
+}
+
+@media(prefers-reduced-motion:reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: .01ms!important;
+    transition-duration: .01ms!important;
+  }
+}
+
+/* Readable queue density without turning the workspace into a spreadsheet. */
+
+.tickets-table th {
+  font-size: 11px;
+}
+
+.ticket-subject {
+  font-size: 13px;
+}
+
+.ticket-excerpt {
+  font-size: 11px;
+}
+
+.ticket-number,
+.category-label {
+  font-size: 10px;
+}
+
+.urgency-badge,
+.routing-label,
+.process-badge,
+.review-status {
+  font-size: 11px;
+}
+
+.sla-caption {
+  font-size: 10px;
+}
+
+.ticket-summary-item>div>span {
+  font-size: 11px;
+}
+
+.sidebar-button {
+  font-size: 13px;
+}
+
+.queue-tabs button {
+  font-size: 12px;
+}
+
+.tickets-table td {
+  padding-block: 17px;
+}
+
+.manual-ticket-form input,
+.manual-ticket-form textarea {
+  font-size: 13px;
+}
+
+.ticket-body,
+.response-content pre,
+.generated-response {
+  font-size: 13px;
+}
+
+/* Square corgi mascot stays visible in the compact navigation too. */
+.logo-mark {
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  overflow: hidden;
+  border-radius: 9px;
+  background: #e5edff;
+}
+.logo-mark img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+@media (max-width: 1200px) and (min-width: 981px) {
+  .sidebar-logo { gap: 8px; font-size: 18px; }
+  .logo-mark { width: 35px; height: 35px; }
+}
+@media (max-width: 500px) {
+  .logo-mark { width: 36px; height: 36px; }
+}

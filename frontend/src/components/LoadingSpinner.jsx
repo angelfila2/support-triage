@@ -1,7 +1,7 @@
 function LoadingSpinner() {
   return (
-    <div className="loading-container">
-      <div className="spinner"></div>
+    <div className="loading-container" role="status" aria-live="polite">
+      <div className="spinner" aria-hidden="true"></div>
 
       <h3>Analyzing support ticket</h3>
 

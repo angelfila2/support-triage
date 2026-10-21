@@ -43,12 +43,11 @@ flowchart TD
 | `backend/rag/vector.py`        | Create the knowledge base vector store using Ollama embeddings and ChromaDB. |
 | `backend/rag/retriever.py`     | Retrieve knowledge base articles for a ticket.                               |
 | `backend/agent/classifier.py`    | Determine category, severity, confidence, answerability, and reasoning.                     |
-| `backend/agent/answerability.py` | Legacy standalone checker; the shared pipeline now assesses answerability in the classifier.               |
 | `backend/agent/router.py`        | Apply escalation and automatic reply policies.                               |
 | `backend/agent/responder.py`     | Generate a customer-facing response from the retrieved context.              |
 | `backend/agent/triage.py`        | Coordinate the shared ticket processing pipeline.                            |
 | `backend/api.py`           | Expose API endpoints and persist ticket records.                             |
-| `backend/evaluation/main.py`          | Run the shared pipeline against the sample dataset.                          |
+| `backend/evaluation/run_batch.py`          | Run the shared pipeline against the sample dataset.                          |
 
 ## Categories
 
@@ -107,53 +106,34 @@ SLA values are recorded targets. Operational alerting and enforcement require in
 
 ```text
 support-triage/
-├── README.md
-├── pytest.ini
 ├── backend/
-│   ├── api.py
-│   ├── config.py
-│   ├── storage.py
-│   ├── requirements.txt
-│   ├── agent/
-│   │   ├── __init__.py
-│   │   ├── triage.py
-│   │   ├── classifier.py
-│   │   ├── answerability.py
-│   │   ├── responder.py
-│   │   ├── router.py
-│   │   ├── safety.py
-│   │   └── structured_output.py
-│   ├── rag/
-│   │   ├── __init__.py
-│   │   ├── kb.py
-│   │   ├── vector.py
-│   │   └── retriever.py
-│   ├── evaluation/
-│   │   ├── __init__.py
-│   │   ├── main.py
-│   │   ├── evaluate.py
-│   │   ├── resultwriter.py
-│   │   └── ticketloader.py
-│   ├── knowledgebase/
-│   └── test/
-│       ├── test_model_output.py
-│       ├── test_router.py
-│       ├── test_storage.py
-│       └── test_import_paths.py
+│   ├── api.py                  # HTTP routes and request validation
+│   ├── storage.py              # SQLite schema and transactions
+│   ├── jobs.py                 # Attempts, retry and recovery
+│   ├── audit.py                # Evidence and version snapshots
+│   ├── auth.py                 # API credential checks
+│   ├── config.py               # Settings and paths
+│   ├── agent/                  # AI triage, policy, routing and replies
+│   ├── rag/                    # Knowledge loading, vectors and retrieval
+│   ├── knowledgebase/          # Original FAQ documents
+│   ├── evaluation/             # run_batch.py, scoring and benchmarks
+│   ├── data/                   # Evaluation inputs and labels
+│   └── test/                   # Backend tests and isolated browser helper
 ├── frontend/
-│   ├── package.json
-│   ├── package-lock.json
-│   ├── vite.config.js
-│   ├── .env
+│   ├── public/support-corgi.png
 │   └── src/
-│       ├── components/
-│       ├── pages/
-│       ├── services/
-│       ├── App.jsx
-│       ├── App.css
-│       └── config.js
-└── test_emails/
+│       ├── App.jsx             # Routes and shared layout
+│       ├── pages/              # Inbox, new ticket, details and insights
+│       ├── components/         # Visible UI building blocks
+│       ├── services/api.js     # HTTP requests
+│       └── styles/             # Shared and page-specific CSS
+├── docs/code-guide.md          # Where to start reading
+├── test_emails/
+└── pytest.ini
 ```
+
+See [the beginner code guide](docs/code-guide.md) for each file's purpose and a
+suggested reading order.
 
 Runtime databases and evaluation exports are created in `backend/output/`.
 The batch runner uses `backend/data/sample_tickets.csv`, containing 30 development
@@ -180,7 +160,7 @@ SupportFlow uses two different models:
 
 | Purpose                                            | Model               | Used by                                          |
 | -------------------------------------------------- | ------------------- | ------------------------------------------------ |
-| Text generation, classification, and answerability | `llama3.2`          | Classifier, answerability checker, and responder |
+| Text generation, classification, and answerability | `llama3.2`          | Combined classifier and responder |
 | Knowledge base and ticket embeddings               | `mxbai-embed-large` | `backend/rag/vector.py`                              |
 
 Download both models:
@@ -342,13 +322,13 @@ The embedding model used by `backend/rag/vector.py` is `mxbai-embed-large`. Keep
 
 ## Using the dashboard
 
-1. Download a support email as an `.eml` file.
-2. Upload it through the triage page.
-3. Review the extracted subject and body.
-4. Start the analysis.
-5. Inspect the category, severity, confidence, routing decision, and response.
-6. Open ticket history to review stored tickets.
-7. Use ticket details to record classification feedback or update response status.
+1. The dashboard opens the ticket inbox (`/tickets`), with search, filters and queue views.
+2. Select **New ticket** (`/triage`) to type a request or upload an `.eml` email.
+3. Review the subject and body, then start triage.
+4. Inspect the category, severity, confidence, routing decision and suggested reply.
+5. Open a ticket to review the original request, AI assessment and decision evidence.
+6. Record classification feedback or agent response notes from ticket details.
+7. Open **Insights** (`/analytics`) for aggregate classification and routing statistics.
 
 Example email files are available in `test_emails/`.
 
@@ -482,7 +462,7 @@ Records the response status, severity, SLA, timestamp, and agent notes.
 From the repository root, with the backend virtual environment active and Ollama running:
 
 ```bash
-python -m backend.evaluation.main
+python -m backend.evaluation.run_batch
 ```
 
 The batch runner:
@@ -614,7 +594,7 @@ Response times depend on hardware, model loading, and ticket length.
 Generate it first:
 
 ```bash
-python -m backend.evaluation.main
+python -m backend.evaluation.run_batch
 ```
 
 Then run:

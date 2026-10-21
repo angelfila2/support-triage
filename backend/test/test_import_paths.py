@@ -17,7 +17,6 @@ from backend.config import BASE_DIR, REPO_ROOT
     "backend.storage",
     "backend.agent.triage",
     "backend.agent.classifier",
-    "backend.agent.answerability",
     "backend.agent.responder",
     "backend.agent.router",
     "backend.agent.safety",
@@ -25,10 +24,8 @@ from backend.config import BASE_DIR, REPO_ROOT
     "backend.rag.kb",
     "backend.rag.vector",
     "backend.rag.retriever",
-    "backend.evaluation.main",
+    "backend.evaluation.run_batch",
     "backend.evaluation.evaluate",
-    "backend.evaluation.ticketloader",
-    "backend.evaluation.resultwriter",
 ])
 def test_reorganized_modules_import_without_running_models(module):
     importlib.import_module(module)
@@ -60,7 +57,7 @@ def test_relative_paths_do_not_depend_on_working_directory(tmp_path):
 
 
 @pytest.mark.parametrize(("module", "setting", "message"), [
-    ("backend.evaluation.main", "SAMPLE_TICKETS_FILE", "Sample tickets file not found"),
+    ("backend.evaluation.run_batch", "SAMPLE_TICKETS_FILE", "Sample tickets file not found"),
     ("backend.evaluation.evaluate", "TRIAGE_RESULTS_FILE", "Results file not found"),
 ])
 def test_evaluation_commands_report_missing_input_instead_of_import_errors(

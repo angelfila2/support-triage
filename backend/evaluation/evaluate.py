@@ -10,7 +10,7 @@ from backend.evaluation.metrics import classification_metrics, critical_escalati
 def main():
     if not TRIAGE_RESULTS_FILE.exists():
         print(f"Error: Results file not found at {TRIAGE_RESULTS_FILE}")
-        print("Please run `python -m backend.evaluation.main` first.")
+        print("Please run `python -m backend.evaluation.run_batch` first.")
         raise SystemExit(1)
     with TRIAGE_RESULTS_FILE.open(encoding="utf-8-sig", newline="") as file:
         rows = list(csv.DictReader(file))

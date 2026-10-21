@@ -1,35 +1,20 @@
-import {
-  CheckCircle2,
-  AlertTriangle,
-  Copy,
-  RotateCcw,
-  ShieldAlert,
-  ArrowLeft,
-} from "lucide-react";
+import { CheckCircle2, AlertTriangle, Copy, RotateCcw, ShieldAlert, ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-function TriageResult({ result, onReset }) {
+function TriageResult({
+  result,
+  onReset
+}) {
   const navigate = useNavigate();
   const copyResponse = async () => {
     if (!result.response) return;
-
     await navigator.clipboard.writeText(result.response);
   };
-
-  const confidence =
-    typeof result.confidence === "number" ? result.confidence : 0;
-
+  const confidence = typeof result.confidence === "number" ? result.confidence : 0;
   const decision = result.decision || "UNKNOWN";
   const isAutoReply = decision === "AUTO_REPLY";
   const isEscalate = decision === "ESCALATE";
-
-  const decisionClass = isAutoReply
-    ? "auto-reply"
-    : isEscalate
-      ? "escalate"
-      : "";
-
-  return (
-    <div className="result-container">
+  const decisionClass = isAutoReply ? "auto-reply" : isEscalate ? "escalate" : "";
+  return <div className="result-container">
       <div className="result-heading">
         <div>
           <span className="eyebrow">ANALYSIS COMPLETE</span>
@@ -38,17 +23,15 @@ function TriageResult({ result, onReset }) {
 
         <button className="secondary-button" onClick={onReset}>
           <RotateCcw size={17} />
-          New Email
+          New ticket
         </button>
-        <button
-          className="ticket-back-button"
-          onClick={() => navigate("/tickets")}
-        >
+        <button className="ticket-back-button" onClick={() => navigate("/tickets")}>
           <ArrowLeft size={15} />
           All tickets
         </button>
       </div>
 
+      <div className="result-saved-link"><CheckCircle2 size={15} /> Ticket #{result.id} saved to your inbox<button className="text-button" onClick={() => navigate(`/tickets/${result.id}`)}>Open ticket →</button></div>
       <div className="metrics-grid">
         <div className="metric-card">
           <span>Category</span>
@@ -69,23 +52,16 @@ function TriageResult({ result, onReset }) {
           </strong>
 
           <div className="confidence-track">
-            <div
-              className="confidence-fill"
-              style={{
-                width: `${Math.min(Math.max(confidence, 0), 100)}%`,
-              }}
-            />
+            <div className="confidence-fill" style={{
+            width: `${Math.min(Math.max(confidence, 0), 100)}%`
+          }} />
           </div>
         </div>
       </div>
 
       <div className={`decision-card ${decisionClass}`}>
         <div className="decision-icon">
-          {isAutoReply ? (
-            <CheckCircle2 size={26} />
-          ) : (
-            <AlertTriangle size={26} />
-          )}
+          {isAutoReply ? <CheckCircle2 size={26} /> : <AlertTriangle size={26} />}
         </div>
 
         <div>
@@ -94,8 +70,7 @@ function TriageResult({ result, onReset }) {
         </div>
       </div>
 
-      {result.is_suspicious && (
-        <div className="suspicious-warning">
+      {result.is_suspicious && <div className="suspicious-warning">
           <ShieldAlert size={20} />
 
           <div>
@@ -104,16 +79,14 @@ function TriageResult({ result, onReset }) {
               This ticket may contain prompt injection or unsafe instructions.
             </p>
           </div>
-        </div>
-      )}
+        </div>}
 
       <div className="card reason-card">
         <span className="eyebrow">REASONING</span>
         <p>{result.reason || "No reasoning provided."}</p>
       </div>
 
-      {result.response && (
-        <div className="card response-card">
+      {result.response && <div className="card response-card">
           <div className="response-header">
             <div>
               <span className="eyebrow">GENERATED RESPONSE</span>
@@ -127,10 +100,7 @@ function TriageResult({ result, onReset }) {
           </div>
 
           <div className="generated-response">{result.response}</div>
-        </div>
-      )}
-    </div>
-  );
+        </div>}
+    </div>;
 }
-
 export default TriageResult;

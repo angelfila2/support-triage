@@ -1,25 +1,13 @@
-import { useState } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
-
 import Header from "./components/Header";
 import Sidebar from "./components/Sidebar";
-
-import TriagePage from "./pages/TriagePage";
-import TicketsPage from "./pages/TicketsPage";
-import TicketDetails from "./pages/TicketDetails";
-import AnalyticsPage from "./pages/AnalyticsPage";
-
-import "./App.css";
-
+import NewTicketPage from "./pages/NewTicketPage";
+import TicketInboxPage from "./pages/TicketInboxPage";
+import TicketDetailsPage from "./pages/TicketDetailsPage";
+import InsightsPage from "./pages/InsightsPage";
+import "./styles/index.css";
 function App() {
-  const [triageHistory, setTriageHistory] = useState([]);
-
-  const handleTriageComplete = (result) => {
-    setTriageHistory((previous) => [...previous, result]);
-  };
-
-  return (
-    <div className="app">
+  return <div className="app">
       <Sidebar />
 
       <div className="app-shell">
@@ -27,28 +15,21 @@ function App() {
 
         <main className="main-content">
           <Routes>
-            <Route
-              path="/"
-              element={<TriagePage onTriageComplete={handleTriageComplete} />}
-            />
+            <Route path="/triage" element={<NewTicketPage />} />
 
-            <Route path="/tickets" element={<TicketsPage />} />
+            <Route path="/tickets" element={<TicketInboxPage />} />
+            <Route path="/" element={<Navigate to="/tickets" replace />} />
 
-            <Route path="/tickets/:ticketId" element={<TicketDetails />} />
+            <Route path="/tickets/:ticketId" element={<TicketDetailsPage />} />
 
-            <Route
-              path="/analytics"
-              element={<AnalyticsPage history={triageHistory} />}
-            />
+            <Route path="/analytics" element={<InsightsPage />} />
 
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </main>
 
-        <footer>SupportFlow · AI Support Ticket Triage</footer>
+        <footer><span>SupportFlow helpdesk</span><span>AI-assisted triage. Human oversight.</span></footer>
       </div>
-    </div>
-  );
+    </div>;
 }
-
 export default App;

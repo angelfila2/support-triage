@@ -87,3 +87,11 @@ pnpm-debug.log*
 *~
 .DS_Store
 Thumbs.db
+
+# Local development instructions and tool settings
+AGENTS.md
+agents.md
+agent.md
+AGENT.md
+.codex/
+.agents/

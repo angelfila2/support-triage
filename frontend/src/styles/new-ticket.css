@@ -1,0 +1,308 @@
+/* Request intake */
+
+.intake-grid {
+  display: grid;
+  grid-template-columns: minmax(0,1fr) 290px;
+  gap: 28px;
+  align-items: start;
+  max-width: 1150px;
+}
+
+.intake-card {
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  overflow: hidden;
+}
+
+.intake-card-heading {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 24px 26px;
+  border-bottom: 1px solid var(--border);
+}
+
+.intake-card-heading h2 {
+  font-size: 15px;
+  margin: 0 0 5px;
+}
+
+.intake-card-heading p {
+  font-size: 11px;
+  color: #7b8ca4;
+  margin: 0;
+}
+
+.intake-symbol {
+  display: grid;
+  place-items: center;
+  width: 39px;
+  height: 39px;
+  border: 1px solid #e7ecf6;
+  border-radius: 9px;
+  color: #7890c3;
+  background: #f6f8fd;
+}
+
+.ticket-entry-modes {
+  display: flex;
+  gap: 7px;
+  padding: 23px 26px 0;
+}
+
+.ticket-entry-modes button {
+  flex: 1;
+  font-size: 11px;
+  min-height: 38px;
+  color: #7a8da8;
+}
+
+.ticket-entry-modes button[aria-pressed="true"] {
+  background: #f1f5ff;
+  border-color: #bfd0fa;
+  color: #5878d2;
+}
+
+.manual-ticket-form {
+  padding: 25px 26px 0;
+}
+
+.manual-ticket-form label {
+  display: block;
+  margin: 0 0 9px;
+  font-size: 11px;
+  color: #66758a;
+}
+
+.manual-ticket-form input {
+  margin-bottom: 23px;
+  font-size: 12px;
+  height: 42px;
+}
+
+.manual-ticket-form textarea {
+  font-size: 12px;
+  min-height: 200px;
+}
+
+.intake-submit {
+  margin: 26px -26px 0;
+  padding: 18px 26px;
+  border-top: 1px solid var(--border);
+  background: #fdfdfe;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.intake-submit>span {
+  font-size: 10px;
+  color: #7f93b2;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.intake-submit button {
+  font-size: 11px;
+}
+
+.intake-guide {
+  padding: 27px 9px 0 4px;
+}
+
+.guide-kicker {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  color: #758cb3;
+}
+
+.intake-guide>h2 {
+  font-size: 23px;
+  line-height: 1.5;
+  color: #4b5b74;
+  letter-spacing: -.6px;
+  margin: 16px 0 5px;
+}
+
+.guide-intro {
+  color: #7c8da8;
+  font-size: 12px;
+}
+
+.intake-guide ol {
+  list-style: none;
+  padding: 5px 0 0;
+  margin: 0;
+}
+
+.intake-guide li {
+  display: flex;
+  gap: 14px;
+  padding: 16px 0;
+  position: relative;
+}
+
+.intake-guide li>span {
+  color: #8da0c8;
+  width: 34px;
+  height: 34px;
+  border: 1px solid #e4eaf4;
+  background: #f8faff;
+  border-radius: 9px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+
+.intake-guide li strong {
+  color: #61748f;
+  font-size: 12px;
+  font-weight: 550;
+}
+
+.intake-guide li p {
+  margin: 5px 0 0;
+  font-size: 11px;
+  color: #7d8ea8;
+}
+
+.guide-safety {
+  display: flex;
+  gap: 9px;
+  border-top: 1px solid #e4e9f1;
+  padding-top: 22px;
+  margin-top: 18px;
+  color: #78958a;
+}
+
+.guide-safety svg {
+  flex-shrink: 0;
+  margin-top: 3px;
+}
+
+.guide-safety p {
+  font-size: 10px;
+  color: #7b8f85;
+  margin: 0;
+}
+
+.guide-safety strong {
+  display: block;
+  font-weight: 550;
+  color: #657f70;
+  margin-bottom: 4px;
+}
+
+.upload-section {
+  padding: 25px 26px;
+}
+
+.drop-zone {
+  min-height: 310px;
+  border: 1px dashed #cfd9ec;
+  border-radius: 8px;
+  background: #fbfcff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 30px;
+  text-align: center;
+}
+
+.drop-zone.dragging {
+  background: #edf3ff;
+  border-color: var(--accent);
+}
+
+.upload-icon {
+  display: grid;
+  place-items: center;
+  width: 57px;
+  height: 57px;
+  background: #eff3fc;
+  color: #8da2ce;
+  border-radius: 15px;
+  margin-bottom: 21px;
+}
+
+.drop-zone h2 {
+  font-size: 16px;
+  color: #657793;
+  margin-bottom: 8px;
+}
+
+.drop-zone p {
+  font-size: 11px;
+  color: #7d8fa9;
+  max-width: 290px;
+  margin-bottom: 23px;
+}
+
+.file-support {
+  font-size: 10px;
+  color: #8294ad;
+  margin-top: 13px;
+}
+
+.email-preview {
+  padding: 24px 26px;
+}
+
+.email-header,
+.email-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.email-header {
+  margin-bottom: 23px;
+}
+
+.email-header h2 {
+  font-size: 15px;
+  margin: 0;
+}
+
+.email-field {
+  margin-bottom: 21px;
+}
+
+.email-field label {
+  display: block;
+  margin-bottom: 8px;
+  color: #7388a5;
+  font-size: 10px;
+}
+
+.email-subject {
+  font-size: 14px;
+  font-weight: 550;
+}
+
+.email-body {
+  line-height: 1.85;
+  white-space: pre-wrap;
+  color: #69788e;
+  font-size: 12px;
+  background: #f8fafd;
+  border: 1px solid #e8edf5;
+  padding: 20px;
+  border-radius: 7px;
+  max-height: 400px;
+  overflow: auto;
+}
+
+.email-actions {
+  padding-top: 18px;
+  border-top: 1px solid var(--border);
+}

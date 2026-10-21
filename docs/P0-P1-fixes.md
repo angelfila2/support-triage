@@ -28,7 +28,7 @@ python -m pytest -q
 python -m backend.evaluation.compare_retrieval
 python -m backend.evaluation.benchmark_answerability
 python -m backend.evaluation.validate_agent
-python -m backend.evaluation.main
+python -m backend.evaluation.run_batch
 python -m backend.evaluation.evaluate
 ```
 

@@ -1,16 +1,28 @@
-# React + Vite
+# SupportFlow frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A React/Vite helpdesk dashboard. The root README covers backend/Ollama setup;
+`../docs/code-guide.md` explains the source files for beginners.
 
-Currently, two official plugins are available:
+| Screen | Source | URL |
+|---|---|---|
+| Ticket inbox | `src/pages/TicketInboxPage.jsx` | `/tickets` (also the landing page) |
+| New ticket | `src/pages/NewTicketPage.jsx` | `/triage` |
+| Ticket details | `src/pages/TicketDetailsPage.jsx` | `/tickets/:ticketId` |
+| Insights | `src/pages/InsightsPage.jsx` | `/analytics` |
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+`App.jsx` connects the screens. `components/` contains visible UI pieces;
+`services/api.js` handles API requests and the session credential. `styles/index.css`
+loads the workspace, page and shared responsive styles in their required order.
 
-## React Compiler
+```powershell
+npm install
+npm run dev
+npm run build
+npm run lint
+```
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+The API defaults to `http://127.0.0.1:8000`. Override `VITE_API_URL` in a local
+`.env` if needed and restart Vite. Never put credentials in frontend environment
+variables; use the header's API access menu. Environment files are not committed.
 
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+`public/support-corgi.png` is the sidebar mascot and browser favicon.

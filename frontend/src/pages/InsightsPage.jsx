@@ -1,4 +1,4 @@
-import { apiFetch } from "../services/apiFetch";
+import { apiFetch } from "../services/api";
 import {
   Activity,
   Bot,
@@ -8,7 +8,7 @@ import {
 import { useEffect, useState } from "react";
 import { API_URL } from "../config";
 
-function AnalyticsPage() {
+function InsightsPage() {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -285,4 +285,4 @@ function formatCategory(category) {
     .replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
 
-export default AnalyticsPage;
+export default InsightsPage;
